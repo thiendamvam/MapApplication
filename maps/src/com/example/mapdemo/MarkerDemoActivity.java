@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.json.JSONObject;
 
@@ -35,6 +37,7 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
 import android.text.SpannableString;
@@ -52,6 +55,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.mapdemo.adapter.UserAdapter;
+import com.example.mapdemo.model.User;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
@@ -77,6 +81,7 @@ public class MarkerDemoActivity extends FragmentActivity
     private static final LatLng ADELAIDE = new LatLng(-34.92873, 138.59995);
     private static final LatLng PERTH = new LatLng(-31.952854, 115.857342);
 
+    private HashMap<String, User> userList;
     /** Demonstrates customizing the info window and/or its contents. */
     class CustomInfoWindowAdapter implements InfoWindowAdapter {
         private final RadioGroup mOptions;
@@ -174,6 +179,7 @@ public class MarkerDemoActivity extends FragmentActivity
         mTopText = (TextView) findViewById(R.id.top_text);
         lnUserList = (LinearLayout)findViewById(R.id.lnUserList);
         lvUserList = (ListView)findViewById(R.id.lvUserList);
+        userList = new HashMap<String, User>();
         setUpMapIfNeeded();
         initUserList();
     }
@@ -222,7 +228,7 @@ public class MarkerDemoActivity extends FragmentActivity
 
         // Add lots of markers to the map.
         addMarkersToMap();
-
+        drawWay();
         // Setting an info window adapter allows us to change the both the contents and look of the
         // info window.
         mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
@@ -259,7 +265,42 @@ public class MarkerDemoActivity extends FragmentActivity
         }
     }
 
-    private void addMarkersToMap() {
+	public Handler handleUpdateUserLocation = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+//			int value = msg.arg1;
+//			String string = (String)msg.obj;
+			exeDrawWay();
+
+		}
+	};
+	public boolean isUdapte = false;
+    public void updateUserLocation(){
+		new Timer().schedule(new TimerTask() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				handleUpdateUserLocation.sendEmptyMessage(1);
+				if(isUdapte){
+					updateUserLocation();
+				}
+			}
+			}, 50);
+    }
+	private void drawWay() {
+		updateUserLocation();
+	}
+	private void exeDrawWay() {
+		// TODO Auto-generated method stub
+//		for(int i= 0; i< userList.size(); i++){
+			LatLng point = SYDNEY;
+			LatLng newLatLng = new LatLng(point.latitude+1000,point.longitude+2000);
+			drawDirection(point, newLatLng);
+//		}
+	}
+
+	private void addMarkersToMap() {
         // Uses a colored icon.
         mBrisbane = mMap.addMarker(new MarkerOptions()
                 .position(BRISBANE)
@@ -320,6 +361,12 @@ public class MarkerDemoActivity extends FragmentActivity
         mMap.clear();
     }
 
+    /**
+     * Refresh user location after 5 minuts.
+     */
+    
+
+    
     /** Called when the Reset button is clicked. */
     public void onResetMap(View view) {
         if (!checkReady()) {
@@ -328,6 +375,7 @@ public class MarkerDemoActivity extends FragmentActivity
         // Clear the map because we don't want duplicates of the markers.
         mMap.clear();
         addMarkersToMap();
+        
     }
 
     /*
@@ -438,6 +486,8 @@ public class MarkerDemoActivity extends FragmentActivity
 	private class ParserTask extends
 			AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
 
+		private ArrayList<LatLng> points;
+
 		// Parsing the data in non-ui thread
 		@Override
 		protected List<List<HashMap<String, String>>> doInBackground(
@@ -461,7 +511,7 @@ public class MarkerDemoActivity extends FragmentActivity
 		// Executes in UI thread, after the parsing process
 		@Override
 		protected void onPostExecute(List<List<HashMap<String, String>>> result) {
-			ArrayList<LatLng> points = null;
+			
 			PolylineOptions lineOptions = null;
 			MarkerOptions markerOptions = new MarkerOptions();
 
@@ -488,6 +538,8 @@ public class MarkerDemoActivity extends FragmentActivity
 				lineOptions.addAll(points);
 				lineOptions.width(5);
 				lineOptions.color(Color.RED);
+				
+				
 
 			}
 
@@ -498,7 +550,7 @@ public class MarkerDemoActivity extends FragmentActivity
 
     public void drawDirection(LatLng origin, LatLng dest){
 
-
+    	Log.d("drawDirection","drawDirection");
 		// Getting URL to the Google Directions API
 		String url = getDirectionsUrl(origin, dest);
 
@@ -509,7 +561,9 @@ public class MarkerDemoActivity extends FragmentActivity
 		downloadTask.execute(url);
     }
     
-    /*
+
+
+	/*
      * (non-Javadoc)
      * Draw way in mapDraw way in map
      */
