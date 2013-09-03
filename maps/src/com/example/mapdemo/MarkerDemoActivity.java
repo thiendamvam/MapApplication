@@ -32,7 +32,11 @@ import java.util.TimerTask;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,13 +44,17 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.SystemClock;
 import android.support.v4.app.FragmentActivity;
+import android.text.Editable;
 import android.text.SpannableString;
+import android.text.TextWatcher;
 import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.Interpolator;
+import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -56,6 +64,7 @@ import android.widget.Toast;
 
 import com.example.mapdemo.adapter.UserAdapter;
 import com.example.mapdemo.model.User;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
@@ -63,7 +72,9 @@ import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerDragListener;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -74,14 +85,13 @@ import com.google.android.gms.maps.model.PolylineOptions;
  * This shows how to place markers on a map.
  */
 public class MarkerDemoActivity extends FragmentActivity
-        implements OnMarkerClickListener, OnInfoWindowClickListener, OnMarkerDragListener {
+        implements OnMarkerClickListener, OnInfoWindowClickListener, OnMarkerDragListener, LocationListener {
     private static final LatLng BRISBANE = new LatLng(-27.47093, 153.0235);
     private static final LatLng MELBOURNE = new LatLng(-37.81319, 144.96298);
-    private static final LatLng SYDNEY = new LatLng(-33.87365, 151.20689);
+    private static final LatLng HANGXANH = new LatLng(10.801216, 106.711278);
     private static final LatLng ADELAIDE = new LatLng(-34.92873, 138.59995);
-    private static final LatLng PERTH = new LatLng(-31.952854, 115.857342);
-
-    private HashMap<String, User> userList;
+    private static final LatLng PERTH = new LatLng(-31.952854, 115.857342);   
+    
     /** Demonstrates customizing the info window and/or its contents. */
     class CustomInfoWindowAdapter implements InfoWindowAdapter {
         private final RadioGroup mOptions;
@@ -124,7 +134,7 @@ public class MarkerDemoActivity extends FragmentActivity
                 badge = R.drawable.badge_qld;
             } else if (marker.equals(mAdelaide)) {
                 badge = R.drawable.badge_sa;
-            } else if (marker.equals(mSydney)) {
+            } else if (marker.equals(mHANGXANH)) {
                 badge = R.drawable.badge_nsw;
             } else if (marker.equals(mMelbourne)) {
                 badge = R.drawable.badge_victoria;
@@ -163,13 +173,22 @@ public class MarkerDemoActivity extends FragmentActivity
     private GoogleMap mMap;
 
     private Marker mPerth;
-    private Marker mSydney;
+    private Marker mHANGXANH;
     private Marker mBrisbane;
     private Marker mAdelaide;
     private Marker mMelbourne;
     private TextView mTopText;
 	private LinearLayout lnUserList;
 	private ListView lvUserList;
+	//
+	private EditText txtSearchList;
+	private UserAdapter userAdapter;
+	private ArrayList<User>  arraySort;
+	//
+//	private HashMap<String,LatLng> latLngUpdate;
+	private HashMap<String, LatLng> historyLatLng;
+	private ArrayList<User> userList;
+	ArrayList<LatLng> latLng;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -179,19 +198,133 @@ public class MarkerDemoActivity extends FragmentActivity
         mTopText = (TextView) findViewById(R.id.top_text);
         lnUserList = (LinearLayout)findViewById(R.id.lnUserList);
         lvUserList = (ListView)findViewById(R.id.lvUserList);
-        userList = new HashMap<String, User>();
+        txtSearchList = (EditText)findViewById(R.id.txtSearchList);
+
+        getUserData();
+
+
         setUpMapIfNeeded();
         initUserList();
+        focusMap();
+        lvUserList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        	public void onItemClick(AdapterView<?> parent, View v, int position, long id){
+        		switch(position){
+        			case 0:
+        				mMap.moveCamera(CameraUpdateFactory.newLatLng(ADELAIDE));
+        				break;
+        			case 1:
+        				mMap.moveCamera(CameraUpdateFactory.newLatLng(BRISBANE));
+        				break;
+        			case 2:
+        				mMap.moveCamera(CameraUpdateFactory.newLatLng(HANGXANH));
+        				break;
+        			case 3:
+        				mMap.moveCamera(CameraUpdateFactory.newLatLng(MELBOURNE));
+        				break;
+        			case 4:
+        				mMap.moveCamera(CameraUpdateFactory.newLatLng(PERTH));
+        				break;
+        			default:
+        				return;
+        		}
+        	}
+		});
+        lvUserList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+        	@Override
+        	public boolean onItemLongClick(AdapterView<?> parent, View v, final int position, long id){
+        		AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MarkerDemoActivity.this);
+        		dialogBuilder.setMessage("Do you want to delete "+lvUserList.getItemAtPosition(position)+" ?");
+        		dialogBuilder.setPositiveButton("Yes", new OnClickListener() {								
+					public void onClick(DialogInterface dialog, int which) {
+					// TODO Auto-generated method stub	
+						userList.remove(position);
+						userAdapter = new UserAdapter(MarkerDemoActivity.this, userList);
+						lvUserList.setAdapter(userAdapter);
+						Log.d("Listview", "userArrayList ====>" + userList);
+					}
+				});
+        		dialogBuilder.setNegativeButton("No", new OnClickListener() {					
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						// TODO Auto-generated method stub
+						return;
+					}
+				});        		
+        		AlertDialog dialog = dialogBuilder.create();
+        		dialog.show();
+        		return true;
+        	}
+		});
+        txtSearchList.addTextChangedListener(new TextWatcher() {
+			
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before, int count) {
+				// TODO Auto-generated method stub
+				if (!txtSearchList.getText().toString().equalsIgnoreCase("")){
+                    arraySort = new ArrayList<User>();
+                    arraySort.clear();
+                    String text = txtSearchList.getText().toString();
+                    for(int i=0 ;i< userList.size();i++){
+                        //if(globalconstant.mosq_list.get(globalconstant.hashformosq.get(globalconstant.tempList.get(i))).name.toUpperCase().toString().contains(text.toUpperCase())){
+                        if(userList.get(i).getName().toUpperCase().toString().contains(text.toUpperCase())){
+                        	arraySort.add(userList.get(i));
+                        }
+                    }
+                    userAdapter = new UserAdapter(MarkerDemoActivity.this, arraySort);
+    				lvUserList.setAdapter(userAdapter);
+                }
+			}
+			
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void afterTextChanged(Editable s) {
+				// TODO Auto-generated method stub
+				if (txtSearchList.getText().toString().equalsIgnoreCase("")){
+					userAdapter = new UserAdapter(MarkerDemoActivity.this, userList);
+					lvUserList.setAdapter(userAdapter);					
+				}
+			}
+		});
     }
-
-    private void initUserList() {
+    
+    private void focusMap() {
 		// TODO Auto-generated method stub
-		ArrayList<String > userList = new ArrayList<String>();
-		userList.add("Nguyen Van A");
-		userList.add("Nguyen Van b");
-		userList.add("Nguyen Van c");
-		userList.add("Nguyen Van d");
-		userList.add("Nguyen Van e");
+    	mMap.animateCamera(CameraUpdateFactory.zoomIn());
+
+ 
+    	// Construct a CameraPosition focusing on Mountain View and animate the camera to that position.
+    	CameraPosition cameraPosition = new CameraPosition.Builder()
+    	    .target(HANGXANH)      // Sets the center of the map to Mountain View
+    	    .zoom(mMap.getMaxZoomLevel())                   // Sets the zoom
+    	    .bearing(90)                // Sets the orientation of the camera to east
+    	    .tilt(30)                   // Sets the tilt of the camera to 30 degrees
+    	    .build();                   // Creates a CameraPosition from the builder
+    	mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+	}
+
+	private void getUserData() {
+		// TODO Auto-generated method stub
+//      userList = new HashMap<String, User>();  
+      //put user
+//      LatLng item = new LatLng(1000, 2000);
+//      latLng.add(item);
+//      LatLng currentItem = new LatLng(6777, 67665);
+//      
+//      User user1 = new User("1", "A", "12345-1", item,latLng);
+//      User user2 = new User("1", "A", "12345-1", currentItem,latLng);
+	}
+
+	private void initUserList() {
+		// TODO Auto-generated method stub
+		userList = new ArrayList<User>();
+		User item = new User("1", "abc", "abc", new LatLng(111, 333), new ArrayList<LatLng>());
+		userList.add(item);
 		UserAdapter userAdapter = new UserAdapter(MarkerDemoActivity.this, userList);
 		lvUserList.setAdapter(userAdapter);
 	}
@@ -224,11 +357,13 @@ public class MarkerDemoActivity extends FragmentActivity
 
     private void setUpMap() {
         // Hide the zoom controls as the button panel will cover it.
-        mMap.getUiSettings().setZoomControlsEnabled(false);
-
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.animateCamera( CameraUpdateFactory.zoomTo( 117.0f ) );
+        mMap.getUiSettings().setCompassEnabled(true);
+        mMap.setMyLocationEnabled(true);
         // Add lots of markers to the map.
         addMarkersToMap();
-        drawWay();
+      
         // Setting an info window adapter allows us to change the both the contents and look of the
         // info window.
         mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
@@ -249,7 +384,7 @@ public class MarkerDemoActivity extends FragmentActivity
                 public void onGlobalLayout() {
                     LatLngBounds bounds = new LatLngBounds.Builder()
                             .include(PERTH)
-                            .include(SYDNEY)
+                            .include(HANGXANH)
                             .include(ADELAIDE)
                             .include(BRISBANE)
                             .include(MELBOURNE)
@@ -263,8 +398,11 @@ public class MarkerDemoActivity extends FragmentActivity
                 }
             });
         }
+        drawWay();
     }
-
+    public void drawUserListInMap(User user){
+    	
+    }
 	public Handler handleUpdateUserLocation = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
@@ -293,9 +431,9 @@ public class MarkerDemoActivity extends FragmentActivity
 	}
 	private void exeDrawWay() {
 		// TODO Auto-generated method stub
-//		for(int i= 0; i< userList.size(); i++){
-			LatLng point = SYDNEY;
-			LatLng newLatLng = new LatLng(point.latitude+1000,point.longitude+2000);
+//		for(int i= 0; i< userListPoint.size(); i++){
+			LatLng point = HANGXANH;
+			LatLng newLatLng = new LatLng(10.801941,106.647482);
 			drawDirection(point, newLatLng);
 //		}
 	}
@@ -303,46 +441,46 @@ public class MarkerDemoActivity extends FragmentActivity
 	private void addMarkersToMap() {
         // Uses a colored icon.
         mBrisbane = mMap.addMarker(new MarkerOptions()
-                .position(BRISBANE)
+                .position(HANGXANH)
                 .title("A")
                 .snippet("Info: 2,074,200")
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-
-        // Uses a custom icon.
-        mSydney = mMap.addMarker(new MarkerOptions()
-                .position(SYDNEY)
-                .title("B")
-                .snippet("Info: 4,627,300")
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow)));
-
-        // Creates a draggable marker. Long press to drag.
-        mMelbourne = mMap.addMarker(new MarkerOptions()
-                .position(MELBOURNE)
-                .title("C")
-                .snippet("Info: 4,137,400")
-                .draggable(true));
-
-        // A few more markers for good measure.
-        mPerth = mMap.addMarker(new MarkerOptions()
-                .position(PERTH)
-                .title("D")
-                .snippet("Info: 1,738,800"));
-        mAdelaide = mMap.addMarker(new MarkerOptions()
-                .position(ADELAIDE)
-                .title("E")
-                .snippet("Info: 1,213,000"));
+        mMap.animateCamera(CameraUpdateFactory.newLatLng(HANGXANH));
+//        // Uses a custom icon.
+//        mHANGXANH = mMap.addMarker(new MarkerOptions()
+//                .position(HANGXANH)
+//                .title("B")
+//                .snippet("Info: 4,627,300")
+//                .icon(BitmapDescriptorFactory.fromResource(R.drawable.arrow)));
+//
+//        // Creates a draggable marker. Long press to drag.
+//        mMelbourne = mMap.addMarker(new MarkerOptions()
+//                .position(MELBOURNE)
+//                .title("C")
+//                .snippet("Info: 4,137,400")
+//                .draggable(true));
+//
+//        // A few more markers for good measure.
+//        mPerth = mMap.addMarker(new MarkerOptions()
+//                .position(PERTH)
+//                .title("D")
+//                .snippet("Info: 1,738,800"));
+//        mAdelaide = mMap.addMarker(new MarkerOptions()
+//                .position(ADELAIDE)
+//                .title("E")
+//                .snippet("Info: 1,213,000"));
 
         // Creates a marker rainbow demonstrating how to create default marker icons of different
         // hues (colors).
-        int numMarkersInRainbow = 12;
-        for (int i = 0; i < numMarkersInRainbow; i++) {
-            mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(
-                            -30 + 10 * Math.sin(i * Math.PI / (numMarkersInRainbow - 1)),
-                            135 - 10 * Math.cos(i * Math.PI / (numMarkersInRainbow - 1))))
-                    .title("Marker " + i)
-                    .icon(BitmapDescriptorFactory.defaultMarker(i * 360 / numMarkersInRainbow)));
-        }
+//        int numMarkersInRainbow = 12;
+//        for (int i = 0; i < numMarkersInRainbow; i++) {
+//            mMap.addMarker(new MarkerOptions()
+//                    .position(new LatLng(
+//                            -30 + 10 * Math.sin(i * Math.PI / (numMarkersInRainbow - 1)),
+//                            135 - 10 * Math.cos(i * Math.PI / (numMarkersInRainbow - 1))))
+//                    .title("Marker " + i)
+//                    .icon(BitmapDescriptorFactory.defaultMarker(i * 360 / numMarkersInRainbow)));
+//        }
     }
 
     private boolean checkReady() {
@@ -620,4 +758,10 @@ public class MarkerDemoActivity extends FragmentActivity
     public void onMarkerDrag(Marker marker) {
         mTopText.setText("onMarkerDrag.  Current Position: " + marker.getPosition());
     }
+
+	@Override
+	public void onLocationChanged(Location location) {
+		// TODO Auto-generated method stub
+		Toast.makeText(MarkerDemoActivity.this, "locaitonchange", Toast.LENGTH_SHORT).show();
+	}
 }
