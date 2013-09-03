@@ -65,6 +65,7 @@ import android.widget.Toast;
 import com.example.mapdemo.adapter.UserAdapter;
 import com.example.mapdemo.model.User;
 import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
@@ -216,7 +217,7 @@ public class MarkerDemoActivity extends FragmentActivity
         				mMap.moveCamera(CameraUpdateFactory.newLatLng(BRISBANE));
         				break;
         			case 2:
-        				mMap.moveCamera(CameraUpdateFactory.newLatLng(HANGXANH));
+        				mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(HANGXANH,20));
         				break;
         			case 3:
         				mMap.moveCamera(CameraUpdateFactory.newLatLng(MELBOURNE));
@@ -295,17 +296,18 @@ public class MarkerDemoActivity extends FragmentActivity
     
     private void focusMap() {
 		// TODO Auto-generated method stub
-    	mMap.animateCamera(CameraUpdateFactory.zoomIn());
-
- 
-    	// Construct a CameraPosition focusing on Mountain View and animate the camera to that position.
-    	CameraPosition cameraPosition = new CameraPosition.Builder()
-    	    .target(HANGXANH)      // Sets the center of the map to Mountain View
-    	    .zoom(mMap.getMaxZoomLevel())                   // Sets the zoom
-    	    .bearing(90)                // Sets the orientation of the camera to east
-    	    .tilt(30)                   // Sets the tilt of the camera to 30 degrees
-    	    .build();                   // Creates a CameraPosition from the builder
-    	mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+//    	mMap.animateCamera(CameraUpdateFactory.zoomIn());
+//
+// 
+//    	// Construct a CameraPosition focusing on Mountain View and animate the camera to that position.
+//    	CameraPosition cameraPosition = new CameraPosition.Builder()
+//    	    .target(HANGXANH)      // Sets the center of the map to Mountain View
+//    	    .zoom(mMap.getMaxZoomLevel())                   // Sets the zoom
+//    	    .bearing(90)                // Sets the orientation of the camera to east
+//    	    .tilt(30)                   // Sets the tilt of the camera to 30 degrees
+//    	    .build();                   // Creates a CameraPosition from the builder
+//    	mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+    	mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(HANGXANH,20));
 	}
 
 	private void getUserData() {
