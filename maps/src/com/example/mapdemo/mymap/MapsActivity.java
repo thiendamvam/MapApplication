@@ -15,6 +15,9 @@ import java.util.TimerTask;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -22,15 +25,28 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.FragmentActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.mapdemo.MarkerDemoActivity;
 import com.example.mapdemo.R;
+import com.example.mapdemo.adapter.UserAdapter;
+import com.example.mapdemo.model.User;
+import com.example.mapdemo.service.IServiceListener;
+import com.example.mapdemo.service.Service;
+import com.example.mapdemo.service.ServiceAction;
+import com.example.mapdemo.service.ServiceResponse;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
@@ -46,17 +62,24 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
 public class MapsActivity extends FragmentActivity implements
-		OnMarkerClickListener, OnInfoWindowClickListener, OnMarkerDragListener {
+		OnMarkerClickListener, OnInfoWindowClickListener, OnMarkerDragListener,
+		IServiceListener {
+
+	private ArrayList<User> userList;
+	private HashMap<String, ArrayList<LatLng>> userPositionList;
+	private static final LatLng HANGXANH = new LatLng(10.801216, 106.711278);
+	private boolean isSanbox = true;
 
 	// Define elements
 	private GoogleMap mMap;
 	ArrayList<LatLng> markerPoints;
 	private Marker mSydney;
 	private HashMap<String, String> myMaker;
-	private LatLng HOTEL_LOCAL = null;
-	private LatLng MARKER2 = null;
-	private LatLng MARKER3 = null;
-	private LatLng MARKER4 = null;
+	private LatLng USER_LOCAL = null;
+	private LatLng MARKER1 = new LatLng(10.8026294, 106.6501343);
+	private LatLng MARKER2 = new LatLng(10.7951191, 106.6671596);
+	private LatLng MARKER3 = new LatLng(10.8409141, 106.6730833);
+	private LatLng MARKER4 = new LatLng(10.7994188, 106.7065515);
 	// private static final LatLng MY_HOME = new LatLng(10.72277, 106.710235);
 	public static final String TAG_BUNDLEBRANCH = "branch_data";
 	public static final String TAG_HOTELLAT = "lat";
@@ -64,13 +87,18 @@ public class MapsActivity extends FragmentActivity implements
 	public static final String TAG_HOTELTITLE_EN = "title_en";
 	public static final String TAG_HOTELADDRESS_EN = "address_en";
 	public static final String TAG_HOTELPHONE = "phone";
-	public static final String TAG_HOTELFAX = "fax";
+	public static final String TAG_NAMEFAX = "fax";
 	public static final String TAG_HOTELEMAIL_EN = "email_en";
 	public static final String TAG_HOTELICON = "thumbnail";
 
 	// Dialog elements
 	private Double lon, lat;
 	private String title_en, address_en, phone, fax, email_en;
+	private Service service;
+	private Context context;
+	private LinearLayout lnUserList;
+	private ListView lvUserList;
+	private EditText txtSearchList;
 
 	/** Demonstrates customizing the info window and/or its contents. */
 	class CustomInfoWindowAdapter implements InfoWindowAdapter {
@@ -116,7 +144,7 @@ public class MapsActivity extends FragmentActivity implements
 			title.setText(makerDetails.get(TAG_HOTELTITLE_EN));
 			address.setText(makerDetails.get(TAG_HOTELADDRESS_EN));
 			phone.setText("Phone: " + makerDetails.get(TAG_HOTELPHONE));
-			fax.setText("Fax: " + makerDetails.get(TAG_HOTELFAX));
+			fax.setText("Name: " + makerDetails.get(TAG_NAMEFAX));
 			email.setText("Email: " + makerDetails.get(TAG_HOTELEMAIL_EN));
 
 			btnDirection.setOnClickListener(new OnClickListener() {
@@ -124,23 +152,27 @@ public class MapsActivity extends FragmentActivity implements
 				@Override
 				public void onClick(View v) {
 					// TODO Auto-generated method stub
-					markerPoints.clear();
-					mMap.clear();
 
 					// Adding new item to the ArrayList
-//					initPointToDraw();
-//					exeDrawWay();
+					// initPointToDraw();
+					// exeDrawWay();
 					drawWay();
 				}
 			});
+
+			drawWay();
 		}
 
 		protected void initPointToDraw() {
 			// TODO Auto-generated method stub
-			LatLng myLocation = new LatLng(mMap.getMyLocation()
-					.getLatitude(), mMap.getMyLocation().getLongitude());
-			HOTEL_LOCAL = new LatLng(10.801216+1, 106.711278+1);
-			LatLng desLocation = HOTEL_LOCAL;
+			LatLng myLocation = new LatLng(mMap.getMyLocation().getLatitude(),
+					mMap.getMyLocation().getLongitude());
+			if(USER_LOCAL==null){
+				USER_LOCAL = new LatLng(10.801216, 106.711278);
+			}else{
+				USER_LOCAL = new LatLng(USER_LOCAL.latitude+0.001, USER_LOCAL.longitude+0.001);
+			}
+			LatLng desLocation = USER_LOCAL;
 
 			// add to marker array
 			for (int i = 0; i <= 1; i++) {
@@ -175,35 +207,51 @@ public class MapsActivity extends FragmentActivity implements
 			}
 
 		}
-		
-		public boolean isUdapte = false;
-		
+
+//		public boolean isUdapte = true;
+
 		public Handler handleUpdateUserLocation = new Handler() {
 			@Override
 			public void handleMessage(Message msg) {
 
+				Log.d("handleUpdateUserLocation","update point");
 				initPointToDraw();
 				exeDrawWay();
 
 			}
 		};
-		
-	    public void updateUserLocation(){
+
+//		public void onStopClicked(View v){
+//
+//			if(btnStop.getText().toString().equals("Stop")){
+//				isUpdate = false;
+//				btnStop.setText("Start");
+//			}else{
+//				isUpdate = true;
+//				btnStop.setText("Stop");
+//			}
+//			
+//		}
+		public void updateUserLocation() {
 			new Timer().schedule(new TimerTask() {
-				
+
 				@Override
 				public void run() {
 					// TODO Auto-generated method stub
 					handleUpdateUserLocation.sendEmptyMessage(1);
-					if(isUdapte){
+					if (isUpdate) {
 						updateUserLocation();
 					}
 				}
-				}, 50);
-	    }
+			}, 1000);
+		}
+
 		private void drawWay() {
+			markerPoints.clear();
+			mMap.clear();
 			updateUserLocation();
 		}
+
 		private void exeDrawWay() {
 			// TODO Auto-generated method stub
 			// Checks, whether start and end locations are captured
@@ -223,13 +271,12 @@ public class MapsActivity extends FragmentActivity implements
 		}
 	}
 
-
-	
 	protected void initPointToDraw() {
 		// TODO Auto-generated method stub
-		LatLng myLocation = new LatLng(mMap.getMyLocation()
-				.getLatitude(), mMap.getMyLocation().getLongitude());
-		LatLng desLocation = new LatLng(10.801216, 106.711278);;
+		LatLng myLocation = new LatLng(mMap.getMyLocation().getLatitude(), mMap
+				.getMyLocation().getLongitude());
+		LatLng desLocation = new LatLng(10.801216, 106.711278);
+		;
 
 		// add to marker array
 		for (int i = 0; i <= 1; i++) {
@@ -264,6 +311,7 @@ public class MapsActivity extends FragmentActivity implements
 		}
 
 	}
+
 	String getDirectionsUrl(LatLng origin, LatLng dest) {
 
 		// Origin of route
@@ -389,38 +437,49 @@ public class MapsActivity extends FragmentActivity implements
 		// Executes in UI thread, after the parsing process
 		@Override
 		protected void onPostExecute(List<List<HashMap<String, String>>> result) {
-			ArrayList<LatLng> points = null;
-			PolylineOptions lineOptions = null;
-			MarkerOptions markerOptions = new MarkerOptions();
+			if (result != null) {
 
-			// Traversing through all the routes
-			for (int i = 0; i < result.size(); i++) {
-				points = new ArrayList<LatLng>();
-				lineOptions = new PolylineOptions();
+				try {
 
-				// Fetching i-th route
-				List<HashMap<String, String>> path = result.get(i);
+					ArrayList<LatLng> points = null;
+					PolylineOptions lineOptions = null;
+					MarkerOptions markerOptions = new MarkerOptions();
 
-				// Fetching all the points in i-th route
-				for (int j = 0; j < path.size(); j++) {
-					HashMap<String, String> point = path.get(j);
+					// Traversing through all the routes
+					for (int i = 0; i < result.size(); i++) {
+						points = new ArrayList<LatLng>();
+						lineOptions = new PolylineOptions();
 
-					double lat = Double.parseDouble(point.get("lat"));
-					double lng = Double.parseDouble(point.get("lng"));
-					LatLng position = new LatLng(lat, lng);
+						// Fetching i-th route
+						List<HashMap<String, String>> path = result.get(i);
 
-					points.add(position);
+						// Fetching all the points in i-th route
+						for (int j = 0; j < path.size(); j++) {
+							HashMap<String, String> point = path.get(j);
+
+							double lat = Double.parseDouble(point.get("lat"));
+							double lng = Double.parseDouble(point.get("lng"));
+							LatLng position = new LatLng(lat, lng);
+
+							points.add(position);
+						}
+
+						// Adding all the points in the route to LineOptions
+						lineOptions.addAll(points);
+						lineOptions.width(5);
+						lineOptions.color(Color.RED);
+
+					}
+
+					// Drawing polyline in the Google Map for the i-th route
+					mMap.addPolyline(lineOptions);
+
+				} catch (Exception e) {
+					// TODO: handle exception
+					e.printStackTrace();
 				}
 
-				// Adding all the points in the route to LineOptions
-				lineOptions.addAll(points);
-				lineOptions.width(5);
-				lineOptions.color(Color.RED);
-
 			}
-
-			// Drawing polyline in the Google Map for the i-th route
-			mMap.addPolyline(lineOptions);
 		}
 	}
 
@@ -435,19 +494,52 @@ public class MapsActivity extends FragmentActivity implements
 
 		// Uses a custom icon.
 		mSydney = mMap.addMarker(new MarkerOptions()
-				.position(HOTEL_LOCAL)
-				.title("")
-				.snippet("")
+				.position(USER_LOCAL)
+				.title("Thien")
+				.snippet("snippet")
 				.icon(BitmapDescriptorFactory
 						.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 
+	}
+
+	private void initUserList() {
+		// TODO Auto-generated method stub
+		UserAdapter userAdapter = new UserAdapter(MapsActivity.this, userList);
+
+		lvUserList.setAdapter(userAdapter);
+	}
+	boolean isUpdate  = true;
+	private Button btnStop;
+	public void onStopClicked(View v){
+		if(btnStop.getText().toString().equals("Stop")){
+			isUpdate = false;
+			btnStop.setText("Start");
+		}else{
+			isUpdate = true;
+			btnStop.setText("Stop");
+		}
+	}
+	
+	public void onMenuClicked(View v) {
+		if (lnUserList.getVisibility() == View.VISIBLE) {
+			lnUserList.setVisibility(View.GONE);
+		} else {
+			lnUserList.setVisibility(View.VISIBLE);
+		}
 	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.maps_main);
-		
+
+		lnUserList = (LinearLayout) findViewById(R.id.lnUserList);
+		lvUserList = (ListView) findViewById(R.id.lvUserList);
+		txtSearchList = (EditText) findViewById(R.id.txtSearchList);
+		btnStop = (Button)findViewById(R.id.btnStop);
+		userList = new ArrayList();
+		userPositionList = new HashMap<String, ArrayList<LatLng>>();
+
 		ImageLoader imgLoader = new ImageLoader(this);
 		int loader = R.drawable.ic_launcher;
 		myMaker = new HashMap<String, String>();
@@ -459,7 +551,7 @@ public class MapsActivity extends FragmentActivity implements
 			myMaker.put(TAG_HOTELADDRESS_EN,
 					bundle.getString(TAG_HOTELADDRESS_EN));
 			myMaker.put(TAG_HOTELPHONE, bundle.getString(TAG_HOTELPHONE));
-			myMaker.put(TAG_HOTELFAX, bundle.getString(TAG_HOTELFAX));
+			myMaker.put(TAG_NAMEFAX, bundle.getString(TAG_NAMEFAX));
 			myMaker.put(TAG_HOTELEMAIL_EN, bundle.getString(TAG_HOTELEMAIL_EN));
 
 			try {
@@ -470,10 +562,11 @@ public class MapsActivity extends FragmentActivity implements
 							.getString(TAG_HOTELLAT));
 					Double lon = Double.parseDouble(bundle
 							.getString(TAG_HOTELLON));
-					HOTEL_LOCAL = new LatLng(lat, lon);
+					USER_LOCAL = new LatLng(lat, lon);
 				} else {
-					HOTEL_LOCAL =  new LatLng(10.801216, 106.711278);
-					Toast.makeText(this, "Cannot find location", Toast.LENGTH_SHORT).show();
+					USER_LOCAL = new LatLng(10.801216, 106.711278);
+					Toast.makeText(this, "Cannot find location",
+							Toast.LENGTH_SHORT).show();
 				}
 
 			} catch (NumberFormatException e) {
@@ -482,22 +575,163 @@ public class MapsActivity extends FragmentActivity implements
 			}
 
 			setUpMapIfNeeded();
-//			drawWay();
+			
 		} else {
 
 			// ERROR HANDLING - put lat lng of default location in case no data
 			// found
-			HOTEL_LOCAL = new LatLng(10.801216, 106.711278);
+			USER_LOCAL = new LatLng(10.801216, 106.711278);
 			Toast.makeText(this, "No data found", Toast.LENGTH_SHORT).show();
 		}
-		
+		service = new Service(MapsActivity.this);
+		context = MapsActivity.this;
+		getUserData();
+		initUserList();
+		drawWay();
+		lvUserList
+				.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+					public void onItemClick(AdapterView<?> parent, View v,
+							int position, long id) {
+						switch (position) {
+						case 0:
+							mMap.moveCamera(CameraUpdateFactory
+									.newLatLng(MARKER1));
+							break;
+						case 1:
+							mMap.moveCamera(CameraUpdateFactory
+									.newLatLng(MARKER2));
+							break;
+						case 2:
+							mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+									HANGXANH, 20));
+							break;
+						case 3:
+							mMap.moveCamera(CameraUpdateFactory
+									.newLatLng(MARKER4));
+							break;
+						case 4:
+							mMap.moveCamera(CameraUpdateFactory
+									.newLatLng(MARKER3));
+							break;
+						default:
+							return;
+						}
+					}
+				});
+		lvUserList
+				.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+					@Override
+					public boolean onItemLongClick(AdapterView<?> parent,
+							View v, final int position, long id) {
+						// AlertDialog.Builder dialogBuilder = new
+						// AlertDialog.Builder(MapsActivity.this);
+						// dialogBuilder.setMessage("Do you want to delete "+lvUserList.getItemAtPosition(position)+" ?");
+						// final UserAdapter userAdapter;
+						// dialogBuilder.setPositiveButton("Yes",new
+						// View.OnClickListener() {
+						//
+						// @Override
+						// public void onClick(View v) {
+						// // TODO Auto-generated method stub
+						// userList.remove(position);
+						// userAdapter = new UserAdapter(MapsActivity.this,
+						// userList);
+						// lvUserList.setAdapter(userAdapter);
+						// Log.d("Listview", "userArrayList ====>" + userList);
+						// }
+						// });
+						// dialogBuilder.setNegativeButton("No", new
+						// View.OnClickListener() {
+						//
+						// @Override
+						// public void onClick(View v) {
+						// // TODO Auto-generated method stub
+						//
+						// }
+						// });
+						// AlertDialog dialog = dialogBuilder.create();
+						// dialog.show();
+						return true;
+					}
+				});
+		txtSearchList.addTextChangedListener(new TextWatcher() {
+
+			private ArrayList<User> arraySort;
+			private UserAdapter userAdapter;
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
+				// TODO Auto-generated method stub
+				if (!txtSearchList.getText().toString().equalsIgnoreCase("")) {
+					arraySort = new ArrayList<User>();
+					arraySort.clear();
+					String text = txtSearchList.getText().toString();
+					for (int i = 0; i < userList.size(); i++) {
+						// if(globalconstant.mosq_list.get(globalconstant.hashformosq.get(globalconstant.tempList.get(i))).name.toUpperCase().toString().contains(text.toUpperCase())){
+						if (userList.get(i).getName().toUpperCase().toString()
+								.contains(text.toUpperCase())) {
+							arraySort.add(userList.get(i));
+						}
+					}
+					userAdapter = new UserAdapter(MapsActivity.this, arraySort);
+					lvUserList.setAdapter(userAdapter);
+				}
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+				// TODO Auto-generated method stub
+
+			}
+
+			@Override
+			public void afterTextChanged(Editable s) {
+				// TODO Auto-generated method stub
+				if (txtSearchList.getText().toString().equalsIgnoreCase("")) {
+					userAdapter = new UserAdapter(MapsActivity.this, userList);
+					lvUserList.setAdapter(userAdapter);
+				}
+			}
+		});
+		CustomInfoWindowAdapter customInforWindows = new CustomInfoWindowAdapter();
+//		showMarkerInfo(mSydney);
+	}
+
+	private void getUserData() {
+		// TODO Auto-generated method stub
+		if (isSanbox) {
+			initHardCode();
+//			drawWay();
+		} else {
+			service.getUserData();
+		}
+
+	}
+
+	private void initHardCode() {
+		// TODO Auto-generated method stub
+		for (int i = 0; i < 1; i++) {
+			ArrayList<LatLng> userPositionList = new ArrayList<LatLng>();
+			userPositionList.add(MARKER1);
+			userPositionList.add(MARKER2);
+			userPositionList.add(MARKER3);
+			userPositionList.add(MARKER4);
+			User user = new User("1", "Thien Dam", " ho Chi minh", HANGXANH,
+					userPositionList);
+			this.userPositionList.put("1", userPositionList);
+			userList.add(user);
+
+		}
+
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 
-//		HOTEL_LOCAL = new LatLng(10.72277, 106.710235);
+		// USER_LOCAL = new LatLng(10.72277, 106.710235);
 
 		setUpMapIfNeeded();
 	}
@@ -551,7 +785,7 @@ public class MapsActivity extends FragmentActivity implements
 						@Override
 						public void onGlobalLayout() {
 							LatLngBounds bounds = new LatLngBounds.Builder()
-									.include(HOTEL_LOCAL).build();
+									.include(USER_LOCAL).build();
 							if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
 								mapView.getViewTreeObserver()
 										.removeGlobalOnLayoutListener(this);
@@ -562,7 +796,7 @@ public class MapsActivity extends FragmentActivity implements
 							mMap.moveCamera(CameraUpdateFactory
 									.newLatLngBounds(bounds, 50));
 							mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-									HOTEL_LOCAL, 15));
+									USER_LOCAL, 15));
 
 							// Data will be loaded from sqlite database and
 							// added to Hashmap
@@ -572,7 +806,7 @@ public class MapsActivity extends FragmentActivity implements
 									myMaker.get(TAG_HOTELADDRESS_EN));
 							myMaker.put(TAG_HOTELPHONE,
 									myMaker.get(TAG_HOTELPHONE));
-							myMaker.put(TAG_HOTELFAX, myMaker.get(TAG_HOTELFAX));
+							myMaker.put(TAG_NAMEFAX, myMaker.get(TAG_NAMEFAX));
 							myMaker.put(TAG_HOTELEMAIL_EN,
 									myMaker.get(TAG_HOTELEMAIL_EN));
 						}
@@ -599,6 +833,12 @@ public class MapsActivity extends FragmentActivity implements
 
 	@Override
 	public void onInfoWindowClick(Marker marker) {
+		showMarkerInfo(marker);
+	}
+
+	public void showMarkerInfo(Marker marker) {
+		// TODO Auto-generated method stub
+
 		// Toast.makeText(getBaseContext(), "Click Info Window",
 		// Toast.LENGTH_SHORT).show();
 
@@ -608,7 +848,7 @@ public class MapsActivity extends FragmentActivity implements
 		// Adding new item to the ArrayList
 		LatLng myLocation = new LatLng(mMap.getMyLocation().getLatitude(), mMap
 				.getMyLocation().getLongitude());
-		LatLng desLocation = HOTEL_LOCAL;
+		LatLng desLocation = USER_LOCAL;
 
 		// add to marker array
 		for (int i = 0; i <= 1; i++) {
@@ -655,6 +895,7 @@ public class MapsActivity extends FragmentActivity implements
 			// Start downloading json data from Google Directions API
 			downloadTask.execute(url);
 		}
+	
 	}
 
 	@Override
@@ -669,7 +910,89 @@ public class MapsActivity extends FragmentActivity implements
 	public void onMarkerDrag(Marker marker) {
 	}
 
-	public void onBack(View v){
+	public void onBack(View v) {
 		finish();
+	}
+
+	@Override
+	public void onCompleted(Service service, ServiceResponse result) {
+		// TODO Auto-generated method stub
+		if (result.isSuccess()
+				&& result.getAction() == ServiceAction.ActionGetUserData) {
+			userList = (ArrayList<User>) result.getData();
+			getUserPositionList();
+		} else if (!result.isSuccess()
+				&& result.getAction() == ServiceAction.ActionGetUserData) {
+			Toast.makeText(context, "get user data fail \ntry again!",
+					Toast.LENGTH_SHORT).show();
+		} else if (result.isSuccess()
+				&& result.getAction() == ServiceAction.ActionGetUserPositionList) {
+			userPositionList = (HashMap<String, ArrayList<LatLng>>) result
+					.getData();
+//			drawWay();
+		} else if (!result.isSuccess()
+				&& result.getAction() == ServiceAction.ActionGetUserPositionList) {
+			Toast.makeText(context, "get user data fail \ntry again!",
+					Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	private void drawWay() {
+		// TODO Auto-generated method stub
+//		customInfoWindows = new CustomInfoWindowAdapter();
+//		customInfoWindows.drawWay();
+		//		updateUserLocation();
+	}
+
+	public Handler handleUpdateUserLocation = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			// int value = msg.arg1;
+			// String string = (String)msg.obj;
+			exeDrawWay();
+
+		}
+	};
+//	public boolean isUdapte = false;
+//
+//	public void updateUserLocation() {
+//		new Timer().schedule(new TimerTask() {
+//
+//			@Override
+//			public void run() {
+//				// TODO Auto-generated method stub
+//				handleUpdateUserLocation.sendEmptyMessage(1);
+//				if (isUdapte) {
+//					updateUserLocation();
+//				}
+//			}
+//		}, 500000000);
+//	}
+
+	private void exeDrawWay() {
+		// TODO Auto-generated method stub
+		// for(int i= 0; i< userListPoint.size(); i++){
+//		LatLng point = HANGXANH;
+//		LatLng newLatLng = new LatLng(10.801941, 106.647482);
+//		drawDirection(point, newLatLng);
+		// }
+	}
+
+	public void drawDirection(LatLng origin, LatLng dest) {
+
+		Log.d("drawDirection", "drawDirection");
+		// Getting URL to the Google Directions API
+		String url = getDirectionsUrl(origin, dest);
+
+		DownloadTask downloadTask = new DownloadTask();
+
+		// Start downloading json data from Google Directions
+		// API
+		downloadTask.execute(url);
+	}
+
+	private void getUserPositionList() {
+		// TODO Auto-generated method stub
+		service.getUserPositionList();
 	}
 }

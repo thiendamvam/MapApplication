@@ -2,18 +2,7 @@ package com.example.mapdemo.service;
 
 public enum ServiceAction {
     ActionNone,
-    ActionInitApp,
-    ActionLogout,
-    ActionGetRetaurentList,
-    ActionLoginFacebook,
-    ActionLoginTwitter,ActionLoginWhyq,ActionSigup,ActionEditProfile,
-    ActionGetFriendsFacebook, 
-    ActionGetFriends, ActionGetBusinessList,
-    ActionGetBusinessDetail,ActionGetFaqs,
-    ActionComment,
-    ActionGetUserActivities,ActionGetUserChecked,
-    ActionPostComment, ActionGetLocation,ActionPostFavorite, ActionRemoveFavorite,ActionForgotPassword,
-    ActionSearchFriendsFacebook, ActionInviteFriendsFacebook, ActionGetComment, ActionCheckedBills, ActionGetBills, ActionGetHistories, ActionGetPhotos, ActionGetOrder, ActionGetProfiles, ActionSearchOnlyFriend, ActionGetInvitations, ActionGetInvitationsNotification, ActionDeleteFriend, ActionOrderSend, ActionGetBillDetail, ActionGetDistance,
+    ActionSearchFriendsFacebook, ActionInviteFriendsFacebook, ActionGetComment, ActionCheckedBills, ActionGetBills, ActionGetHistories, ActionGetPhotos, ActionGetOrder, ActionGetProfiles, ActionSearchOnlyFriend, ActionGetInvitations, ActionGetInvitationsNotification, ActionDeleteFriend, ActionOrderSend, ActionGetBillDetail, ActionGetDistance, ActionGetUserData, ActionGetUserPositionList, ActionGetLocation,
 
 
 }

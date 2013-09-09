@@ -106,4 +106,14 @@ public class DataParser {
 		return doc;
 
 	}
+
+	public Object parserUserDataResult() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Object parserUserPositionResult() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

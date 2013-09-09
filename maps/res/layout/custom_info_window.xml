@@ -17,11 +17,13 @@
             android:layout_height="wrap_content"
             android:textColor="#ffffff"
             android:textSize="18sp"
+            android:visibility="gone"
             android:textStyle="bold"
             android:text="null" />
         
         <TextView
             android:id="@+id/address"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="#ffffff"
@@ -29,17 +31,7 @@
             android:paddingTop="5dp"
             android:paddingBottom="2.5dp"
             android:text="null" />
-        
-        <TextView
-            android:id="@+id/phone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="#ffffff"
-            android:textSize="14dp"
-            android:paddingTop="2.5dp"
-            android:paddingBottom="2.5dp"
-            android:text="null" />
-        
+                
         <TextView
             android:id="@+id/fax"
             android:layout_width="match_parent"
@@ -49,6 +41,16 @@
             android:paddingTop="2.5dp"
             android:paddingBottom="2.5dp"
             android:text="null" />
+        <TextView
+            android:id="@+id/phone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#ffffff"
+            android:textSize="14dp"
+            android:paddingTop="2.5dp"
+            android:paddingBottom="2.5dp"
+            android:text="null" />
+
         
         <TextView
             android:id="@+id/email"
@@ -67,6 +69,7 @@
             android:layout_gravity="center"
             android:textColor="@android:color/white"
             android:background="@drawable/ic_launcher"
+            android:visibility="gone"
             android:text="get direction" />
     </LinearLayout>
 

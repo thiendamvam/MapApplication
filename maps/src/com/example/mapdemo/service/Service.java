@@ -55,8 +55,6 @@ public class Service implements Runnable {
 	private boolean _isBitmap;
 	private HttpClient httpclient;
 
-	
-
 	final Handler handler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
@@ -139,9 +137,12 @@ public class Service implements Runnable {
 		// TODO
 		case ActionNone:
 			break;
-//		case ActionGetRetaurentList:
-//			resObj = parser.parseRetaurentList();
-//			break;
+		case ActionGetUserData:
+			resObj = parser.parserUserDataResult();
+			break;
+		case ActionGetUserPositionList:
+			resObj = parser.parserUserPositionResult();
+			break;
 		default:
 			resObj = result;
 			break;
@@ -176,7 +177,7 @@ public class Service implements Runnable {
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
-		Log.d(_action.toString(), "=========== run ===========\n"+_actionURI);
+		Log.d(_action.toString(), "=========== run ===========\n" + _actionURI);
 		httpclient = new DefaultHttpClient();
 		// AndroidHttpClient httpclient = AndroidHttpClient
 		// .newInstance(_actionURI);
@@ -192,11 +193,10 @@ public class Service implements Runnable {
 				textSearch = textSearch.replace(" ", "+");
 				urlString = "http://ws.geonames.org/search?q=" + textSearch
 						+ "&style=full&maxRows=10";
-			} else if(_action == ServiceAction.ActionGetDistance){
-				urlString = _actionURI;				
-			}else
-				urlString = _includeHost ? API.host + _actionURI
-						: _actionURI;
+			} else if (_action == ServiceAction.ActionGetDistance) {
+				urlString = _actionURI;
+			} else
+				urlString = _includeHost ? API.host + _actionURI : _actionURI;
 			HttpRequestBase request = null;
 
 			if (_isGet) {
@@ -256,6 +256,7 @@ public class Service implements Runnable {
 			httpclient.getConnectionManager().shutdown();
 		}
 	}
+
 	private void attachUriWithQuery(HttpRequestBase request, Uri uri,
 			Map<String, String> params) {
 		try {
@@ -299,6 +300,7 @@ public class Service implements Runnable {
 
 		return formList;
 	}
+
 	private String convertStreamToString(InputStream is) {
 		// TODO Auto-generated method stub
 
@@ -333,15 +335,13 @@ public class Service implements Runnable {
 		} else {
 			return "";
 		}
-	
+
 	}
 
 	public int getConnectionTimeout() {
 		return _connection.getConnectTimeout();
 	}
 
-
-	
 	public void getBillDetail(String billId, String encryptedToken) {
 		// TODO Auto-generated method stub
 		_action = ServiceAction.ActionGetBillDetail;
@@ -351,6 +351,18 @@ public class Service implements Runnable {
 		request("/m/member/order/show", params, true, false);
 	}
 
-	
+	public void getUserData() {
+		// TODO Auto-generated method stub
+		_action = ServiceAction.ActionGetUserData;
+		Map<String, String> params = new HashMap<String, String>();
+		request("/m/member/order/show", params, true, false);
+	}
+
+	public void getUserPositionList() {
+		// TODO Auto-generated method stub
+		_action = ServiceAction.ActionGetUserPositionList;
+		Map<String, String> params = new HashMap<String, String>();
+		request("/m/member/order/show", params, true, false);
+	}
 
 }
