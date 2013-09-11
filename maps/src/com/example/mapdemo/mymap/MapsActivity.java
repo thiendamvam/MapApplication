@@ -72,7 +72,7 @@ public class MapsActivity extends FragmentActivity implements
 	private GoogleMap mMap;
 	ArrayList<LatLng> markerPoints;
 	private Marker mSydney;
-	private HashMap<String, String> myMaker;
+//	private HashMap<String, String> myMaker;
 	private LatLng USER_LOCAL = null;
 	private LatLng MARKER1 = new LatLng(10.8026294, 106.6501343);
 	private LatLng MARKER2 = new LatLng(10.7951191, 106.6671596);
@@ -113,7 +113,9 @@ public class MapsActivity extends FragmentActivity implements
 
 		@Override
 		public View getInfoWindow(Marker marker) {
-			render(marker, mWindow, myMaker);
+//			myMaker = userList.g
+//			render(marker, mWindow, myMaker);
+			render(marker, mWindow, userList.get(0));
 			return mWindow;
 		}
 
@@ -122,9 +124,8 @@ public class MapsActivity extends FragmentActivity implements
 			// TODO Auto-generated method stub
 			return null;
 		}
-
 		private void render(Marker marker, View view,
-				HashMap<String, String> makerDetails) {
+				User user) {
 
 			// Init markerPoint
 			markerPoints = new ArrayList<LatLng>();
@@ -139,12 +140,17 @@ public class MapsActivity extends FragmentActivity implements
 					.findViewById(R.id.btnDirection));
 
 			// Put value to elements
-			title.setText(makerDetails.get(TAG_HOTELTITLE_EN));
-			address.setText(makerDetails.get(TAG_HOTELADDRESS_EN));
-			phone.setText("Phone: " + makerDetails.get(TAG_HOTELPHONE));
-			fax.setText("Name: " + makerDetails.get(TAG_NAMEFAX));
-			email.setText("Email: " + makerDetails.get(TAG_HOTELEMAIL_EN));
+//			title.setText(makerDetails.get(TAG_HOTELTITLE_EN));
+//			address.setText(makerDetails.get(TAG_HOTELADDRESS_EN));
+//			phone.setText("Phone: " + makerDetails.get(TAG_HOTELPHONE));
+//			fax.setText("Name: " + makerDetails.get(TAG_NAMEFAX));
+//			email.setText("Email: " + makerDetails.get(TAG_HOTELEMAIL_EN));
 
+			phone.setText("Phone: " + user.getPhoneNumber());
+			fax.setText("Name: " + user.getName());
+			email.setText("Email: " + user.getId());
+
+			
 			btnDirection.setOnClickListener(new OnClickListener() {
 
 				@Override
@@ -160,6 +166,44 @@ public class MapsActivity extends FragmentActivity implements
 
 			// drawWay();
 		}
+
+//		private void render(Marker marker, View view,
+//				HashMap<String, String> makerDetails) {
+//
+//			// Init markerPoint
+//			markerPoints = new ArrayList<LatLng>();
+//
+//			// Define elements
+//			TextView title = ((TextView) view.findViewById(R.id.title));
+//			TextView address = ((TextView) view.findViewById(R.id.address));
+//			TextView phone = ((TextView) view.findViewById(R.id.phone));
+//			TextView fax = ((TextView) view.findViewById(R.id.fax));
+//			TextView email = ((TextView) view.findViewById(R.id.email));
+//			Button btnDirection = ((Button) view
+//					.findViewById(R.id.btnDirection));
+//
+//			// Put value to elements
+//			title.setText(makerDetails.get(TAG_HOTELTITLE_EN));
+//			address.setText(makerDetails.get(TAG_HOTELADDRESS_EN));
+//			phone.setText("Phone: " + makerDetails.get(TAG_HOTELPHONE));
+//			fax.setText("Name: " + makerDetails.get(TAG_NAMEFAX));
+//			email.setText("Email: " + makerDetails.get(TAG_HOTELEMAIL_EN));
+//
+//			btnDirection.setOnClickListener(new OnClickListener() {
+//
+//				@Override
+//				public void onClick(View v) {
+//					// TODO Auto-generated method stub
+//
+//					// Adding new item to the ArrayList
+//					// initPointToDraw();
+//					// exeDrawWay();
+//					// drawWay();
+//				}
+//			});
+//
+//			// drawWay();
+//		}
 
 		// protected void initPointToDraw() {
 		// // TODO Auto-generated method stub
@@ -544,17 +588,17 @@ public class MapsActivity extends FragmentActivity implements
 
 		ImageLoader imgLoader = new ImageLoader(this);
 		int loader = R.drawable.ic_launcher;
-		myMaker = new HashMap<String, String>();
+//		myMaker = new HashMap<String, String>();
 		Bundle bundle = getIntent().getBundleExtra(TAG_BUNDLEBRANCH);
 
 		if (bundle != null && bundle.getString(TAG_HOTELTITLE_EN) != null) {
 
-			myMaker.put(TAG_HOTELTITLE_EN, bundle.getString(TAG_HOTELTITLE_EN));
-			myMaker.put(TAG_HOTELADDRESS_EN,
-					bundle.getString(TAG_HOTELADDRESS_EN));
-			myMaker.put(TAG_HOTELPHONE, bundle.getString(TAG_HOTELPHONE));
-			myMaker.put(TAG_NAMEFAX, bundle.getString(TAG_NAMEFAX));
-			myMaker.put(TAG_HOTELEMAIL_EN, bundle.getString(TAG_HOTELEMAIL_EN));
+//			myMaker.put(TAG_HOTELTITLE_EN, bundle.getString(TAG_HOTELTITLE_EN));
+//			myMaker.put(TAG_HOTELADDRESS_EN,
+//					bundle.getString(TAG_HOTELADDRESS_EN));
+//			myMaker.put(TAG_HOTELPHONE, bundle.getString(TAG_HOTELPHONE));
+//			myMaker.put(TAG_NAMEFAX, bundle.getString(TAG_NAMEFAX));
+//			myMaker.put(TAG_HOTELEMAIL_EN, bundle.getString(TAG_HOTELEMAIL_EN));
 
 			try {
 
@@ -768,7 +812,7 @@ public class MapsActivity extends FragmentActivity implements
 
 		// Enable MyLocation Button in the Map
 		mMap.setMyLocationEnabled(true);
-
+		mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
 		// Add lots of markers to the map.
 		addMarkersToMap();
 
@@ -812,15 +856,15 @@ public class MapsActivity extends FragmentActivity implements
 
 							// Data will be loaded from sqlite database and
 							// added to Hashmap
-							myMaker.put(TAG_HOTELTITLE_EN,
-									myMaker.get(TAG_HOTELTITLE_EN));
-							myMaker.put(TAG_HOTELADDRESS_EN,
-									myMaker.get(TAG_HOTELADDRESS_EN));
-							myMaker.put(TAG_HOTELPHONE,
-									myMaker.get(TAG_HOTELPHONE));
-							myMaker.put(TAG_NAMEFAX, myMaker.get(TAG_NAMEFAX));
-							myMaker.put(TAG_HOTELEMAIL_EN,
-									myMaker.get(TAG_HOTELEMAIL_EN));
+//							myMaker.put(TAG_HOTELTITLE_EN,
+//									myMaker.get(TAG_HOTELTITLE_EN));
+//							myMaker.put(TAG_HOTELADDRESS_EN,
+//									myMaker.get(TAG_HOTELADDRESS_EN));
+//							myMaker.put(TAG_HOTELPHONE,
+//									myMaker.get(TAG_HOTELPHONE));
+//							myMaker.put(TAG_NAMEFAX, myMaker.get(TAG_NAMEFAX));
+//							myMaker.put(TAG_HOTELEMAIL_EN,
+//									myMaker.get(TAG_HOTELEMAIL_EN));
 						}
 					});
 		}
@@ -992,9 +1036,26 @@ public class MapsActivity extends FragmentActivity implements
 			if (userPoints != null) {
 				if (userPoints.size() >= 2) {
 					int size = userPoints.size();
-					LatLng origin = userPoints.get(size - 2);
-					LatLng dest = userPoints.get(size - 1);
+					
+					LatLng myLocation = null;
+					if (mMap.getMyLocation() != null) {
+						myLocation = new LatLng(mMap.getMyLocation().getLatitude(), mMap
+								.getMyLocation().getLongitude());
+					} else {
+						myLocation = userPoints.get(size - 1);;
 
+					}
+					LatLng origin = userPoints.get(size - 2);
+//					LatLng dest = userPoints.get(size - 1);
+					LatLng dest = myLocation;
+					
+					mMap.addMarker(new MarkerOptions()
+					.position(myLocation)
+					.title(user.getName())
+					.snippet(user.getPhoneNumber())
+					.icon(BitmapDescriptorFactory
+							.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+		
 					// Getting URL to the Google Directions API
 					String url = getDirectionsUrl(origin, dest);
 
