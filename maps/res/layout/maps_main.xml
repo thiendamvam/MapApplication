@@ -62,8 +62,10 @@
         android:id="@+id/lnHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@android:color/black"
+        android:background="@android:color/background_dark"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
+        android:padding="10dp"
         android:weightSum="3" >
 
         <Button
@@ -78,8 +80,8 @@
             android:id="@+id/btnStop"
             android:layout_width="80dp"
             android:layout_height="40dp"
-            android:onClick="onStopClicked"
             android:layout_alignParentRight="true"
+            android:onClick="onStopClicked"
             android:text="Stop" >
         </Button>
     </RelativeLayout>
@@ -97,7 +99,7 @@
         android:layout_width="150dp"
         android:layout_height="match_parent"
         android:layout_below="@+id/lnHeader"
-        android:background="@android:color/transparent"
+        android:background="@android:color/black"
         android:orientation="vertical"
         android:visibility="visible" >
 
@@ -105,17 +107,36 @@
             android:id="@+id/txtSearchList"
             android:layout_width="match_parent"
             android:layout_height="40dp"
-            android:background="@color/common_signin_btn_dark_text_default"
+            android:layout_margin="5dp"
+            android:background="@android:drawable/editbox_background"
             android:hint="Search List"
             android:inputType="textVisiblePassword" >
         </EditText>
 
-        <ListView
-            android:id="@+id/lvUserList"
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@android:color/black" >
-        </ListView>
+            android:layout_height="match_parent" >
+
+            <ListView
+                android:id="@+id/lvUserList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_above="@+id/btnAdd"
+                android:background="@android:color/background_dark"
+                android:padding="5dp" >
+            </ListView>
+
+            <Button
+                android:id="@+id/btnAdd"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:layout_margin="10dp"
+                android:padding="5dp"
+                android:onClick="onAddUserClicked"
+                android:text="Add User" />
+        </RelativeLayout>
     </LinearLayout>
 
 </RelativeLayout>

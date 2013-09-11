@@ -15,9 +15,8 @@ import java.util.TimerTask;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -39,7 +38,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.mapdemo.MarkerDemoActivity;
 import com.example.mapdemo.R;
 import com.example.mapdemo.adapter.UserAdapter;
 import com.example.mapdemo.model.User;
@@ -156,127 +154,129 @@ public class MapsActivity extends FragmentActivity implements
 					// Adding new item to the ArrayList
 					// initPointToDraw();
 					// exeDrawWay();
-					drawWay();
+					// drawWay();
 				}
 			});
 
-			drawWay();
+			// drawWay();
 		}
 
-		protected void initPointToDraw() {
-			// TODO Auto-generated method stub
-			LatLng myLocation = new LatLng(mMap.getMyLocation().getLatitude(),
-					mMap.getMyLocation().getLongitude());
-			if(USER_LOCAL==null){
-				USER_LOCAL = new LatLng(10.801216, 106.711278);
-			}else{
-				USER_LOCAL = new LatLng(USER_LOCAL.latitude+0.001, USER_LOCAL.longitude+0.001);
-			}
-			LatLng desLocation = USER_LOCAL;
-
-			// add to marker array
-			for (int i = 0; i <= 1; i++) {
-				switch (i) {
-				case 0:
-					// Creating MarkerOptions
-					MarkerOptions options = new MarkerOptions();
-					markerPoints.add(myLocation);
-					// Setting the position of the marker
-					options.position(myLocation);
-					options.icon(BitmapDescriptorFactory
-							.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
-					// Add new marker to the Google Map Android API V2
-					mMap.addMarker(options);
-					break;
-
-				case 1:
-					// Creating MarkerOptions
-					MarkerOptions options2 = new MarkerOptions();
-					markerPoints.add(desLocation);
-					// Setting the position of the marker
-					options2.position(desLocation);
-					options2.icon(BitmapDescriptorFactory
-							.defaultMarker(BitmapDescriptorFactory.HUE_RED));
-					// Add new marker to the Google Map Android API V2
-					mMap.addMarker(options2);
-					break;
-
-				default:
-					break;
-				}
-			}
-
-		}
-
-//		public boolean isUdapte = true;
-
-		public Handler handleUpdateUserLocation = new Handler() {
-			@Override
-			public void handleMessage(Message msg) {
-
-				Log.d("handleUpdateUserLocation","update point");
-				initPointToDraw();
-				exeDrawWay();
-
-			}
-		};
-
-//		public void onStopClicked(View v){
-//
-//			if(btnStop.getText().toString().equals("Stop")){
-//				isUpdate = false;
-//				btnStop.setText("Start");
-//			}else{
-//				isUpdate = true;
-//				btnStop.setText("Stop");
-//			}
-//			
-//		}
-		public void updateUserLocation() {
-			new Timer().schedule(new TimerTask() {
-
-				@Override
-				public void run() {
-					// TODO Auto-generated method stub
-					handleUpdateUserLocation.sendEmptyMessage(1);
-					if (isUpdate) {
-						updateUserLocation();
-					}
-				}
-			}, 1000);
-		}
-
-		private void drawWay() {
-			markerPoints.clear();
-			mMap.clear();
-			updateUserLocation();
-		}
-
-		private void exeDrawWay() {
-			// TODO Auto-generated method stub
-			// Checks, whether start and end locations are captured
-			if (markerPoints.size() >= 2) {
-				LatLng origin = markerPoints.get(0);
-				LatLng dest = markerPoints.get(1);
-
-				// Getting URL to the Google Directions API
-				String url = getDirectionsUrl(origin, dest);
-
-				DownloadTask downloadTask = new DownloadTask();
-
-				// Start downloading json data from Google Directions
-				// API
-				downloadTask.execute(url);
-			}
-		}
+		// protected void initPointToDraw() {
+		// // TODO Auto-generated method stub
+		// LatLng myLocation = new LatLng(mMap.getMyLocation().getLatitude(),
+		// mMap.getMyLocation().getLongitude());
+		// if(USER_LOCAL==null){
+		// USER_LOCAL = new LatLng(10.801216, 106.711278);
+		// }else{
+		// USER_LOCAL = new LatLng(USER_LOCAL.latitude+0.001,
+		// USER_LOCAL.longitude+0.001);
+		// }
+		// LatLng desLocation = USER_LOCAL;
+		//
+		// // add to marker array
+		// for (int i = 0; i <= 1; i++) {
+		// switch (i) {
+		// case 0:
+		// // Creating MarkerOptions
+		// MarkerOptions options = new MarkerOptions();
+		// markerPoints.add(myLocation);
+		// // Setting the position of the marker
+		// options.position(myLocation);
+		// options.icon(BitmapDescriptorFactory
+		// .defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+		// // Add new marker to the Google Map Android API V2
+		// mMap.addMarker(options);
+		// break;
+		//
+		// case 1:
+		// // Creating MarkerOptions
+		// MarkerOptions options2 = new MarkerOptions();
+		// markerPoints.add(desLocation);
+		// // Setting the position of the marker
+		// options2.position(desLocation);
+		// options2.icon(BitmapDescriptorFactory
+		// .defaultMarker(BitmapDescriptorFactory.HUE_RED));
+		// // Add new marker to the Google Map Android API V2
+		// mMap.addMarker(options2);
+		// break;
+		//
+		// default:
+		// break;
+		// }
+		// }
+		//
+		// }
+		//
+		// // public boolean isUdapte = true;
+		//
+		// public Handler handleUpdateUserLocation = new Handler() {
+		// @Override
+		// public void handleMessage(Message msg) {
+		//
+		// Log.d("handleUpdateUserLocation","update point");
+		// initPointToDraw();
+		// exeDrawWay();
+		//
+		// }
+		// };
+		//
+		// public void updateUserLocation() {
+		// new Timer().schedule(new TimerTask() {
+		//
+		// @Override
+		// public void run() {
+		// // TODO Auto-generated method stub
+		// handleUpdateUserLocation.sendEmptyMessage(1);
+		// if (isUpdate) {
+		// updateUserLocation();
+		// }
+		// }
+		// }, 1000);
+		// }
+		//
+		// private void drawWay() {
+		// markerPoints.clear();
+		// mMap.clear();
+		// updateUserLocation();
+		// }
+		//
+		// private void exeDrawWay() {
+		// // TODO Auto-generated method stub
+		// // Checks, whether start and end locations are captured
+		// if (markerPoints.size() >= 2) {
+		// LatLng origin = markerPoints.get(0);
+		// LatLng dest = markerPoints.get(1);
+		//
+		// // Getting URL to the Google Directions API
+		// String url = getDirectionsUrl(origin, dest);
+		//
+		// DownloadTask downloadTask = new DownloadTask();
+		//
+		// // Start downloading json data from Google Directions
+		// // API
+		// downloadTask.execute(url);
+		// }
+		// }
 	}
 
 	protected void initPointToDraw() {
 		// TODO Auto-generated method stub
-		LatLng myLocation = new LatLng(mMap.getMyLocation().getLatitude(), mMap
-				.getMyLocation().getLongitude());
-		LatLng desLocation = new LatLng(10.801216, 106.711278);
-		;
+
+		markerPoints = new ArrayList<LatLng>();
+		LatLng myLocation = null;
+		if (mMap.getMyLocation() != null) {
+			myLocation = new LatLng(mMap.getMyLocation().getLatitude(), mMap
+					.getMyLocation().getLongitude());
+		} else {
+			myLocation = HANGXANH;
+		}
+		if (USER_LOCAL == null) {
+			USER_LOCAL = new LatLng(10.801216, 106.711278);
+		} else {
+			USER_LOCAL = new LatLng(USER_LOCAL.latitude + 0.001,
+					USER_LOCAL.longitude + 0.001);
+		}
+		LatLng desLocation = USER_LOCAL;
 
 		// add to marker array
 		for (int i = 0; i <= 1; i++) {
@@ -508,18 +508,20 @@ public class MapsActivity extends FragmentActivity implements
 
 		lvUserList.setAdapter(userAdapter);
 	}
-	boolean isUpdate  = true;
+
+	boolean isUpdate = true;
 	private Button btnStop;
-	public void onStopClicked(View v){
-		if(btnStop.getText().toString().equals("Stop")){
+
+	public void onStopClicked(View v) {
+		if (btnStop.getText().toString().equals("Stop")) {
 			isUpdate = false;
 			btnStop.setText("Start");
-		}else{
+		} else {
 			isUpdate = true;
 			btnStop.setText("Stop");
 		}
 	}
-	
+
 	public void onMenuClicked(View v) {
 		if (lnUserList.getVisibility() == View.VISIBLE) {
 			lnUserList.setVisibility(View.GONE);
@@ -536,7 +538,7 @@ public class MapsActivity extends FragmentActivity implements
 		lnUserList = (LinearLayout) findViewById(R.id.lnUserList);
 		lvUserList = (ListView) findViewById(R.id.lvUserList);
 		txtSearchList = (EditText) findViewById(R.id.txtSearchList);
-		btnStop = (Button)findViewById(R.id.btnStop);
+		btnStop = (Button) findViewById(R.id.btnStop);
 		userList = new ArrayList();
 		userPositionList = new HashMap<String, ArrayList<LatLng>>();
 
@@ -574,8 +576,6 @@ public class MapsActivity extends FragmentActivity implements
 				e.printStackTrace();
 			}
 
-			setUpMapIfNeeded();
-			
 		} else {
 
 			// ERROR HANDLING - put lat lng of default location in case no data
@@ -583,11 +583,14 @@ public class MapsActivity extends FragmentActivity implements
 			USER_LOCAL = new LatLng(10.801216, 106.711278);
 			Toast.makeText(this, "No data found", Toast.LENGTH_SHORT).show();
 		}
+		setUpMapIfNeeded();
 		service = new Service(MapsActivity.this);
 		context = MapsActivity.this;
 		getUserData();
 		initUserList();
+		// initPointToDraw();
 		drawWay();
+
 		lvUserList
 				.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 					public void onItemClick(AdapterView<?> parent, View v,
@@ -695,15 +698,14 @@ public class MapsActivity extends FragmentActivity implements
 				}
 			}
 		});
-		CustomInfoWindowAdapter customInforWindows = new CustomInfoWindowAdapter();
-//		showMarkerInfo(mSydney);
+
 	}
 
 	private void getUserData() {
 		// TODO Auto-generated method stub
 		if (isSanbox) {
 			initHardCode();
-//			drawWay();
+			// drawWay();
 		} else {
 			service.getUserData();
 		}
@@ -712,16 +714,26 @@ public class MapsActivity extends FragmentActivity implements
 
 	private void initHardCode() {
 		// TODO Auto-generated method stub
-		for (int i = 0; i < 1; i++) {
-			ArrayList<LatLng> userPositionList = new ArrayList<LatLng>();
-			userPositionList.add(MARKER1);
-			userPositionList.add(MARKER2);
-			userPositionList.add(MARKER3);
-			userPositionList.add(MARKER4);
-			User user = new User("1", "Thien Dam", " ho Chi minh", HANGXANH,
-					userPositionList);
-			this.userPositionList.put("1", userPositionList);
-			userList.add(user);
+		for (int i = 0; i< 1; i++) {
+			if (i == 0) {
+				ArrayList<LatLng> userPositionList = new ArrayList<LatLng>();
+				userPositionList.add(MARKER1);
+				userPositionList.add(MARKER2);
+				userPositionList.add(MARKER3);
+				userPositionList.add(MARKER4);
+				User user = new User("" + i, "Thien Dam", " ho Chi minh",
+						HANGXANH, userPositionList);
+				this.userPositionList.put("" + i, userPositionList);
+				userList.add(user);
+			} else {
+				ArrayList<LatLng> userPositionList = new ArrayList<LatLng>();
+				userPositionList.add(MARKER3);
+				userPositionList.add(MARKER4);
+				User user = new User("" + i, "Dam Thien", "Sai Gon", MARKER3,
+						userPositionList);
+				this.userPositionList.put("" + i, userPositionList);
+				userList.add(user);
+			}
 
 		}
 
@@ -895,7 +907,7 @@ public class MapsActivity extends FragmentActivity implements
 			// Start downloading json data from Google Directions API
 			downloadTask.execute(url);
 		}
-	
+
 	}
 
 	@Override
@@ -929,7 +941,7 @@ public class MapsActivity extends FragmentActivity implements
 				&& result.getAction() == ServiceAction.ActionGetUserPositionList) {
 			userPositionList = (HashMap<String, ArrayList<LatLng>>) result
 					.getData();
-//			drawWay();
+			// drawWay();
 		} else if (!result.isSuccess()
 				&& result.getAction() == ServiceAction.ActionGetUserPositionList) {
 			Toast.makeText(context, "get user data fail \ntry again!",
@@ -939,9 +951,9 @@ public class MapsActivity extends FragmentActivity implements
 
 	private void drawWay() {
 		// TODO Auto-generated method stub
-//		customInfoWindows = new CustomInfoWindowAdapter();
-//		customInfoWindows.drawWay();
-		//		updateUserLocation();
+		// markerPoints.clear();
+		// mMap.clear();
+		updateUserLocation();
 	}
 
 	public Handler handleUpdateUserLocation = new Handler() {
@@ -949,32 +961,65 @@ public class MapsActivity extends FragmentActivity implements
 		public void handleMessage(Message msg) {
 			// int value = msg.arg1;
 			// String string = (String)msg.obj;
+			Log.d("handleUpdateUserLocation", "update point");
+			// initPointToDraw();
 			exeDrawWay();
 
 		}
 	};
-//	public boolean isUdapte = false;
-//
-//	public void updateUserLocation() {
-//		new Timer().schedule(new TimerTask() {
-//
-//			@Override
-//			public void run() {
-//				// TODO Auto-generated method stub
-//				handleUpdateUserLocation.sendEmptyMessage(1);
-//				if (isUdapte) {
-//					updateUserLocation();
-//				}
-//			}
-//		}, 500000000);
-//	}
+	public boolean isUdapte = true;
+
+	public void updateUserLocation() {
+		new Timer().schedule(new TimerTask() {
+
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				handleUpdateUserLocation.sendEmptyMessage(1);
+				if (isUpdate) {
+					updateUserLocation();
+				}
+			}
+		}, 1000);
+	}
 
 	private void exeDrawWay() {
 		// TODO Auto-generated method stub
-		// for(int i= 0; i< userListPoint.size(); i++){
-//		LatLng point = HANGXANH;
-//		LatLng newLatLng = new LatLng(10.801941, 106.647482);
-//		drawDirection(point, newLatLng);
+		int userSize = userList.size();
+		for (User user : userList) {
+			String id = user.getId();
+			ArrayList<LatLng> userPoints = userPositionList.get(id);
+			if (userPoints != null) {
+				if (userPoints.size() >= 2) {
+					int size = userPoints.size();
+					LatLng origin = userPoints.get(size - 2);
+					LatLng dest = userPoints.get(size - 1);
+
+					// Getting URL to the Google Directions API
+					String url = getDirectionsUrl(origin, dest);
+
+					DownloadTask downloadTask = new DownloadTask();
+
+					// Start downloading json data from Google Directions
+					// API
+					downloadTask.execute(url);
+				}
+			}
+		}
+
+		// if (markerPoints.size() >= 2) {
+		// int size = markerPoints.size();
+		// LatLng origin = markerPoints.get(size-2);
+		// LatLng dest = markerPoints.get(size-1);
+		//
+		// // Getting URL to the Google Directions API
+		// String url = getDirectionsUrl(origin, dest);
+		//
+		// DownloadTask downloadTask = new DownloadTask();
+		//
+		// // Start downloading json data from Google Directions
+		// // API
+		// downloadTask.execute(url);
 		// }
 	}
 
@@ -994,5 +1039,10 @@ public class MapsActivity extends FragmentActivity implements
 	private void getUserPositionList() {
 		// TODO Auto-generated method stub
 		service.getUserPositionList();
+	}
+
+	public void onAddUserClicked(View v) {
+		Intent i = new Intent(MapsActivity.this, AddUserActivity.class);
+		startActivity(i);
 	}
 }
