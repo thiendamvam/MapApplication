@@ -137,11 +137,21 @@ public class Service implements Runnable {
 		// TODO
 		case ActionNone:
 			break;
-		case ActionGetUserData:
-			resObj = parser.parserUserDataResult();
-			break;
+
 		case ActionGetUserPositionList:
 			resObj = parser.parserUserPositionResult();
+			break;
+		case ActionAllUser:
+			resObj = parser.parserUserListResult(result);
+			break;
+		case ActionUpdateUserLocation:
+			resObj = parser.parserUpdateLocationResult(result);
+			break;
+		case ActionAddUser:
+			resObj = parser.parserAddUserResult(result);
+			break;
+		case ActionLogin:
+			resObj = parser.parserLoginResult(result);
 			break;
 		default:
 			resObj = result;
@@ -353,16 +363,50 @@ public class Service implements Runnable {
 
 	public void getUserData() {
 		// TODO Auto-generated method stub
-		_action = ServiceAction.ActionGetUserData;
+		_action = ServiceAction.ActionAllUser;
 		Map<String, String> params = new HashMap<String, String>();
-		request("/m/member/order/show", params, true, false);
+		request("/api/get_user_list.php", params, true, true);
 	}
 
-	public void getUserPositionList() {
+	public void getUserPositionList(String id) {
 		// TODO Auto-generated method stub
 		_action = ServiceAction.ActionGetUserPositionList;
 		Map<String, String> params = new HashMap<String, String>();
-		request("/m/member/order/show", params, true, false);
+		params.put("id", id);
+		request("/api/get_user_position.php", params, true, true);
 	}
 
+	public void updateLocation(String id, String lat, String lon, String address) {
+		// TODO Auto-generated method stub
+		_action = ServiceAction.ActionUpdateUserLocation;
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("id", id);
+		params.put("lat", lat);
+		params.put("lon", lon);
+		params.put("address", address);
+		request("/api/add_latlng.php", params, true, true);
+	}
+
+	public void login(String id, String password) {
+		// TODO Auto-generated method stub
+		_action = ServiceAction.ActionLogin;
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("id", id);
+		params.put("password", password);
+		request("/api/authen.php", params, true, true);
+	}
+
+	public void addUser(String id, String password, String name,
+			String phoneNumber, String address, String type) {
+		// TODO Auto-generated method stub
+		_action = ServiceAction.ActionAddUser;
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("id", id);
+		params.put("password", password);
+		params.put("name", name);
+		params.put("phone_number", phoneNumber);
+		params.put("address", address);
+		params.put("type", type);
+		request("/api/add_user.php", params, true, true);
+	}
 }

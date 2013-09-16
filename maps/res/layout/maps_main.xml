@@ -77,6 +77,15 @@
         </Button>
 
         <Button
+            android:id="@+id/btnMapType"
+            android:layout_width="80dp"
+            android:layout_height="40dp"
+            android:layout_marginRight="7dp"
+            android:layout_toLeftOf="@+id/btnStop"
+            android:onClick="onMapTyleClicked"
+            android:text="Traffic" />
+
+        <Button
             android:id="@+id/btnStop"
             android:layout_width="80dp"
             android:layout_height="40dp"
@@ -96,7 +105,7 @@
 
     <LinearLayout
         android:id="@+id/lnUserList"
-        android:layout_width="150dp"
+        android:layout_width="200dp"
         android:layout_height="match_parent"
         android:layout_below="@+id/lnHeader"
         android:background="@android:color/black"
@@ -133,8 +142,8 @@
                 android:layout_alignParentBottom="true"
                 android:layout_centerHorizontal="true"
                 android:layout_margin="10dp"
-                android:padding="5dp"
                 android:onClick="onAddUserClicked"
+                android:padding="5dp"
                 android:text="Add User" />
         </RelativeLayout>
     </LinearLayout>

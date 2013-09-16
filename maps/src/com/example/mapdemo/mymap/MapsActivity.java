@@ -1,12 +1,16 @@
 package com.example.mapdemo.mymap;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
@@ -16,20 +20,26 @@ import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.FragmentActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -40,8 +50,10 @@ import android.widget.Toast;
 
 import com.example.mapdemo.R;
 import com.example.mapdemo.adapter.UserAdapter;
+import com.example.mapdemo.adapter.UserAdapter.ViewHolderSection;
 import com.example.mapdemo.model.User;
 import com.example.mapdemo.service.IServiceListener;
+import com.example.mapdemo.service.ImageService;
 import com.example.mapdemo.service.Service;
 import com.example.mapdemo.service.ServiceAction;
 import com.example.mapdemo.service.ServiceResponse;
@@ -51,6 +63,7 @@ import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
 import com.google.android.gms.maps.GoogleMap.OnInfoWindowClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerDragListener;
+import com.google.android.gms.maps.GoogleMap.SnapshotReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
@@ -63,11 +76,13 @@ public class MapsActivity extends FragmentActivity implements
 		OnMarkerClickListener, OnInfoWindowClickListener, OnMarkerDragListener,
 		IServiceListener {
 
-	private ArrayList<User> userList;
+	public static ArrayList<User> userList;
 	private HashMap<String, ArrayList<LatLng>> userPositionList;
 	private static final LatLng HANGXANH = new LatLng(10.801216, 106.711278);
 	private boolean isSanbox = true;
 
+	
+	public static boolean IS_ADMIN = true;
 	// Define elements
 	private GoogleMap mMap;
 	ArrayList<LatLng> markerPoints;
@@ -78,6 +93,10 @@ public class MapsActivity extends FragmentActivity implements
 	private LatLng MARKER2 = new LatLng(10.7951191, 106.6671596);
 	private LatLng MARKER3 = new LatLng(10.8409141, 106.6730833);
 	private LatLng MARKER4 = new LatLng(10.7994188, 106.7065515);
+	private LatLng MARKER5 = new LatLng(10.8625254, 106.7609739);
+	private LatLng MARKER6 = new LatLng(10.8507321, 106.7645936);
+	
+	private ArrayList<LatLng> currentUserList = new ArrayList<LatLng>();
 	// private static final LatLng MY_HOME = new LatLng(10.72277, 106.710235);
 	public static final String TAG_BUNDLEBRANCH = "branch_data";
 	public static final String TAG_HOTELLAT = "lat";
@@ -88,6 +107,8 @@ public class MapsActivity extends FragmentActivity implements
 	public static final String TAG_NAMEFAX = "fax";
 	public static final String TAG_HOTELEMAIL_EN = "email_en";
 	public static final String TAG_HOTELICON = "thumbnail";
+	
+	private User currentUser;
 
 	// Dialog elements
 	private Double lon, lat;
@@ -115,7 +136,8 @@ public class MapsActivity extends FragmentActivity implements
 		public View getInfoWindow(Marker marker) {
 //			myMaker = userList.g
 //			render(marker, mWindow, myMaker);
-			render(marker, mWindow, userList.get(0));
+			if(userList.size()>0)
+				render(marker, mWindow, userList.get(0));
 			return mWindow;
 		}
 
@@ -148,7 +170,7 @@ public class MapsActivity extends FragmentActivity implements
 
 			phone.setText("Phone: " + user.getPhoneNumber());
 			fax.setText("Name: " + user.getName());
-			email.setText("Email: " + user.getId());
+			email.setText("Address: " + user.getAddress());
 
 			
 			btnDirection.setOnClickListener(new OnClickListener() {
@@ -555,6 +577,8 @@ public class MapsActivity extends FragmentActivity implements
 
 	boolean isUpdate = true;
 	private Button btnStop;
+	private Button btnMaptype;
+	private LinearLayout lnContent;
 
 	public void onStopClicked(View v) {
 		if (btnStop.getText().toString().equals("Stop")) {
@@ -563,6 +587,12 @@ public class MapsActivity extends FragmentActivity implements
 		} else {
 			isUpdate = true;
 			btnStop.setText("Stop");
+			if(IS_ADMIN){
+				addUserMarker();
+				drawWay();
+			}else{
+				drawWay();
+			}
 		}
 	}
 
@@ -583,12 +613,12 @@ public class MapsActivity extends FragmentActivity implements
 		lvUserList = (ListView) findViewById(R.id.lvUserList);
 		txtSearchList = (EditText) findViewById(R.id.txtSearchList);
 		btnStop = (Button) findViewById(R.id.btnStop);
+		btnMaptype = (Button)findViewById(R.id.btnMapType);
 		userList = new ArrayList();
 		userPositionList = new HashMap<String, ArrayList<LatLng>>();
 
 		ImageLoader imgLoader = new ImageLoader(this);
 		int loader = R.drawable.ic_launcher;
-//		myMaker = new HashMap<String, String>();
 		Bundle bundle = getIntent().getBundleExtra(TAG_BUNDLEBRANCH);
 
 		if (bundle != null && bundle.getString(TAG_HOTELTITLE_EN) != null) {
@@ -627,122 +657,141 @@ public class MapsActivity extends FragmentActivity implements
 			USER_LOCAL = new LatLng(10.801216, 106.711278);
 			Toast.makeText(this, "No data found", Toast.LENGTH_SHORT).show();
 		}
-		setUpMapIfNeeded();
 		service = new Service(MapsActivity.this);
 		context = MapsActivity.this;
-		getUserData();
-		initUserList();
-		// initPointToDraw();
-		drawWay();
+		
+		
+		if(IS_ADMIN){
+			setUpMapIfNeeded();
+			getUserData();
+			initUserList();
+			// initPointToDraw();
 
-		lvUserList
-				.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-					public void onItemClick(AdapterView<?> parent, View v,
-							int position, long id) {
-						switch (position) {
-						case 0:
-							mMap.moveCamera(CameraUpdateFactory
-									.newLatLng(MARKER1));
-							break;
-						case 1:
-							mMap.moveCamera(CameraUpdateFactory
-									.newLatLng(MARKER2));
-							break;
-						case 2:
-							mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-									HANGXANH, 20));
-							break;
-						case 3:
-							mMap.moveCamera(CameraUpdateFactory
-									.newLatLng(MARKER4));
-							break;
-						case 4:
-							mMap.moveCamera(CameraUpdateFactory
-									.newLatLng(MARKER3));
-							break;
-						default:
-							return;
+
+			lvUserList
+					.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+						public void onItemClick(AdapterView<?> parent, View v,
+								int position, long id) {
+							Log.d("setOnItemClickListener","id "+id);
+							switch (position) {
+							case 0:
+								mMap.moveCamera(CameraUpdateFactory
+										.newLatLng(MARKER1));
+								break;
+							case 1:
+								mMap.moveCamera(CameraUpdateFactory
+										.newLatLng(MARKER2));
+								break;
+							case 2:
+								mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+										HANGXANH, 20));
+								break;
+							case 3:
+								mMap.moveCamera(CameraUpdateFactory
+										.newLatLng(MARKER4));
+								break;
+							case 4:
+								mMap.moveCamera(CameraUpdateFactory
+										.newLatLng(MARKER3));
+								break;
+							default:
+								return;
+							}
 						}
-					}
-				});
-		lvUserList
-				.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-					@Override
-					public boolean onItemLongClick(AdapterView<?> parent,
-							View v, final int position, long id) {
-						// AlertDialog.Builder dialogBuilder = new
-						// AlertDialog.Builder(MapsActivity.this);
-						// dialogBuilder.setMessage("Do you want to delete "+lvUserList.getItemAtPosition(position)+" ?");
-						// final UserAdapter userAdapter;
-						// dialogBuilder.setPositiveButton("Yes",new
-						// View.OnClickListener() {
-						//
-						// @Override
-						// public void onClick(View v) {
-						// // TODO Auto-generated method stub
-						// userList.remove(position);
-						// userAdapter = new UserAdapter(MapsActivity.this,
-						// userList);
-						// lvUserList.setAdapter(userAdapter);
-						// Log.d("Listview", "userArrayList ====>" + userList);
-						// }
-						// });
-						// dialogBuilder.setNegativeButton("No", new
-						// View.OnClickListener() {
-						//
-						// @Override
-						// public void onClick(View v) {
-						// // TODO Auto-generated method stub
-						//
-						// }
-						// });
-						// AlertDialog dialog = dialogBuilder.create();
-						// dialog.show();
-						return true;
-					}
-				});
-		txtSearchList.addTextChangedListener(new TextWatcher() {
-
-			private ArrayList<User> arraySort;
-			private UserAdapter userAdapter;
-
-			@Override
-			public void onTextChanged(CharSequence s, int start, int before,
-					int count) {
-				// TODO Auto-generated method stub
-				if (!txtSearchList.getText().toString().equalsIgnoreCase("")) {
-					arraySort = new ArrayList<User>();
-					arraySort.clear();
-					String text = txtSearchList.getText().toString();
-					for (int i = 0; i < userList.size(); i++) {
-						// if(globalconstant.mosq_list.get(globalconstant.hashformosq.get(globalconstant.tempList.get(i))).name.toUpperCase().toString().contains(text.toUpperCase())){
-						if (userList.get(i).getName().toUpperCase().toString()
-								.contains(text.toUpperCase())) {
-							arraySort.add(userList.get(i));
+					});
+			lvUserList
+					.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+						@SuppressWarnings("deprecation")
+						@Override
+						public boolean onItemLongClick(AdapterView<?> parent,
+								View v, final int position, long id) {
+							android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(
+									context);
+							builder.setTitle("Delete user");
+							builder.setMessage("Do you want to delete "
+									+ userList.get(position).getName()+ " ?");
+							final android.app.AlertDialog alertError = builder.create();
+							alertError.setButton("Yes", new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									// TODO Auto-generated method stub
+									userList.remove(position);
+									UserAdapter userAdapter = new UserAdapter(
+											MapsActivity.this, userList);
+									lvUserList.setAdapter(userAdapter);
+									Log.d("Listview", "userArrayList ====>"
+											+ userList);
+								}
+							});
+							alertError.setButton2("No", new DialogInterface.OnClickListener() {
+								@Override
+								public void onClick(DialogInterface dialog, int which) {
+									alertError.dismiss();
+								}
+							});
+							alertError.show();
+							return true;
 						}
+					});
+			txtSearchList.addTextChangedListener(new TextWatcher() {
+
+				private ArrayList<User> arraySort;
+				private UserAdapter userAdapter;
+
+				@Override
+				public void onTextChanged(CharSequence s, int start, int before,
+						int count) {
+					// TODO Auto-generated method stub
+					if (!txtSearchList.getText().toString().equalsIgnoreCase("")) {
+						arraySort = new ArrayList<User>();
+						arraySort.clear();
+						String text = txtSearchList.getText().toString();
+						for (int i = 0; i < userList.size(); i++) {
+							// if(globalconstant.mosq_list.get(globalconstant.hashformosq.get(globalconstant.tempList.get(i))).name.toUpperCase().toString().contains(text.toUpperCase())){
+							if (userList.get(i).getName().toUpperCase().toString()
+									.contains(text.toUpperCase())) {
+								arraySort.add(userList.get(i));
+							}
+						}
+						userAdapter = new UserAdapter(MapsActivity.this, arraySort);
+						lvUserList.setAdapter(userAdapter);
 					}
-					userAdapter = new UserAdapter(MapsActivity.this, arraySort);
-					lvUserList.setAdapter(userAdapter);
 				}
-			}
 
-			@Override
-			public void beforeTextChanged(CharSequence s, int start, int count,
-					int after) {
-				// TODO Auto-generated method stub
+				@Override
+				public void beforeTextChanged(CharSequence s, int start, int count,
+						int after) {
+					// TODO Auto-generated method stub
 
-			}
-
-			@Override
-			public void afterTextChanged(Editable s) {
-				// TODO Auto-generated method stub
-				if (txtSearchList.getText().toString().equalsIgnoreCase("")) {
-					userAdapter = new UserAdapter(MapsActivity.this, userList);
-					lvUserList.setAdapter(userAdapter);
 				}
-			}
-		});
 
+				@Override
+				public void afterTextChanged(Editable s) {
+					// TODO Auto-generated method stub
+					if (txtSearchList.getText().toString().equalsIgnoreCase("")) {
+						userAdapter = new UserAdapter(MapsActivity.this, userList);
+						lvUserList.setAdapter(userAdapter);
+					}
+				}
+			});
+
+		}else{
+			if(isSanbox){
+				currentUser = new User("demo@demo.com", "a", "addss", "0900000455",null, MARKER1, new ArrayList<LatLng>(),"0");
+			}
+		}
+	}
+
+	private void addUserMarker() {
+		// TODO Auto-generated method stub
+//		for(User user:userList){
+//			mMap.addMarker(new MarkerOptions()
+//			.position(user.getCurrentLatLng())
+//			.title(user.getName())
+//			.snippet(user.getPhoneNumber())
+//			.icon(BitmapDescriptorFactory
+//					.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+//		}
 	}
 
 	private void getUserData() {
@@ -758,24 +807,32 @@ public class MapsActivity extends FragmentActivity implements
 
 	private void initHardCode() {
 		// TODO Auto-generated method stub
-		for (int i = 0; i< 1; i++) {
+		currentUserList.add(MARKER1);
+		currentUserList.add(MARKER2);
+		currentUserList.add(MARKER3);
+		currentUserList.add(MARKER4);
+		currentUserList.add(MARKER5);
+		currentUserList.add(MARKER6);
+		
+		for (int i = 0; i< 6; i++) {
 			if (i == 0) {
 				ArrayList<LatLng> userPositionList = new ArrayList<LatLng>();
 				userPositionList.add(MARKER1);
 				userPositionList.add(MARKER2);
 				userPositionList.add(MARKER3);
 				userPositionList.add(MARKER4);
-				User user = new User("" + i, "Thien Dam", " ho Chi minh",
-						HANGXANH, userPositionList);
+				User user = new User("absc","","Thien Dam "+i, "0909679839", " ho Chi minh",
+						currentUserList.get(i), userPositionList,"0");
 				this.userPositionList.put("" + i, userPositionList);
 				userList.add(user);
+				
 			} else {
 				ArrayList<LatLng> userPositionList = new ArrayList<LatLng>();
 				userPositionList.add(MARKER3);
 				userPositionList.add(MARKER4);
-				User user = new User("" + i, "Dam Thien", "Sai Gon", MARKER3,
-						userPositionList);
-				this.userPositionList.put("" + i, userPositionList);
+				User user = new User("abc","a", "Thien Dam "+i, "0909679839"+i, "Sai Gon", currentUserList.get(i),
+						userPositionList,"0");
+				this.userPositionList.put("0909679839" + i, userPositionList);
 				userList.add(user);
 			}
 
@@ -790,6 +847,7 @@ public class MapsActivity extends FragmentActivity implements
 		// USER_LOCAL = new LatLng(10.72277, 106.710235);
 
 		setUpMapIfNeeded();
+		initUserList();
 	}
 
 	private void setUpMapIfNeeded() {
@@ -974,11 +1032,11 @@ public class MapsActivity extends FragmentActivity implements
 	public void onCompleted(Service service, ServiceResponse result) {
 		// TODO Auto-generated method stub
 		if (result.isSuccess()
-				&& result.getAction() == ServiceAction.ActionGetUserData) {
+				&& result.getAction() == ServiceAction.ActionAllUser) {
 			userList = (ArrayList<User>) result.getData();
-			getUserPositionList();
+			initUserList();
 		} else if (!result.isSuccess()
-				&& result.getAction() == ServiceAction.ActionGetUserData) {
+				&& result.getAction() == ServiceAction.ActionAllUser) {
 			Toast.makeText(context, "get user data fail \ntry again!",
 					Toast.LENGTH_SHORT).show();
 		} else if (result.isSuccess()
@@ -1001,13 +1059,26 @@ public class MapsActivity extends FragmentActivity implements
 	}
 
 	public Handler handleUpdateUserLocation = new Handler() {
+		private LatLng myLocation;
+
 		@Override
 		public void handleMessage(Message msg) {
 			// int value = msg.arg1;
 			// String string = (String)msg.obj;
 			Log.d("handleUpdateUserLocation", "update point");
 			// initPointToDraw();
-			exeDrawWay();
+			if(IS_ADMIN){
+				exeDrawWay();
+			}else{
+				myLocation = null;
+				if (mMap.getMyLocation() != null) {
+					myLocation = new LatLng(mMap.getMyLocation().getLatitude(), mMap
+							.getMyLocation().getLongitude());
+					exeSendLocationUpdate(currentUser.getId(), myLocation);
+				} else {
+				}
+
+			}
 
 		}
 	};
@@ -1027,12 +1098,17 @@ public class MapsActivity extends FragmentActivity implements
 		}, 1000);
 	}
 
+	protected void exeSendLocationUpdate(String userId, LatLng location) {
+		// TODO Auto-generated method stub
+		service.updateLocation(userId, ""+location.latitude, ""+location.longitude,"");
+	}
+
 	private void exeDrawWay() {
 		// TODO Auto-generated method stub
 		int userSize = userList.size();
 		for (User user : userList) {
-			String id = user.getId();
-			ArrayList<LatLng> userPoints = userPositionList.get(id);
+			String phoneNumber = user.getPhoneNumber();
+			ArrayList<LatLng> userPoints = userPositionList.get(phoneNumber);
 			if (userPoints != null) {
 				if (userPoints.size() >= 2) {
 					int size = userPoints.size();
@@ -1097,13 +1173,164 @@ public class MapsActivity extends FragmentActivity implements
 		downloadTask.execute(url);
 	}
 
-	private void getUserPositionList() {
+	private void getUserPositionList(String id) {
 		// TODO Auto-generated method stub
-		service.getUserPositionList();
+		service.getUserPositionList(id);
 	}
 
 	public void onAddUserClicked(View v) {
 		Intent i = new Intent(MapsActivity.this, AddUserActivity.class);
 		startActivity(i);
 	}
+	
+	public void onMapTyleClicked(View v){
+		if(btnMaptype.getText().toString().equals("Satellite")){
+			mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+			btnMaptype.setText("Traffic");
+		}else{
+			mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+			btnMaptype.setText("Satellite");
+		}
+		
+	}
+	public void onStartUserClicked(View v){
+		Log.d("onStartUserClicked","clicked"+v.getId());
+		ViewHolderSection holder = (ViewHolderSection)v.getTag();
+		if (holder.btnStart.getText().toString().equals("Stop")) {
+			isUpdate = false;
+			holder.btnStart.setText("Start");
+			holder.btnStart.setBackgroundColor(Color.BLUE);
+//			SaveAdToSDCard(lnContent, holder.userData.getPhoneNumber());
+			CaptureMapScreen(holder.userData.getPhoneNumber(),"test");
+			Toast.makeText(context, "Successful", Toast.LENGTH_LONG).show();
+		} else {
+			isUpdate = true;
+			holder.btnStart.setText("Stop");
+			holder.btnStart.setBackgroundColor(Color.RED);
+		}
+		mMap.moveCamera(CameraUpdateFactory
+				.newLatLng(holder.userData.getCurrentLatLng()));
+	}
+
+
+	public void CaptureMapScreen(final String userId, String nameImage) 
+	{
+		Thread threa = new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+
+				SnapshotReadyCallback callback = new SnapshotReadyCallback() {
+				            Bitmap bitmap;
+
+				            @Override
+				            public void onSnapshotReady(Bitmap snapshot) {
+				                // TODO Auto-generated method stub
+				                bitmap = snapshot;
+				                try {
+				                	File file = new File(getDataPath()+"/"+userId);
+				                	if(!file.exists())
+				                		file.mkdir();
+				                    FileOutputStream out = new FileOutputStream(getDataPath()+"/"+userId+"/" + getDataFromMiliseconts(System.currentTimeMillis())
+				                        + ".png");
+
+				                    // above "/mnt ..... png" => is a storage path (where image will be stored) + name of image you can customize as per your Requirement
+
+				                    bitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
+				                } catch (Exception e) {
+				                    e.printStackTrace();
+				                }
+				            }
+				        };
+
+				        mMap.snapshot(callback);
+
+				        // myMap is object of GoogleMap +> GoogleMap myMap;
+				        // which is initialized in onCreate() => 
+				        // myMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map_pass_home_call)).getMap();
+				
+			}
+		});
+		threa.start();
+	}
+	
+	public void SaveAdToSDCard(View ads, String userId) {
+		try {
+			// adapter.setPageWidth(0.5f);
+			Canvas tempCanvas = null;
+			// ads.draw(tempCanvas);
+			// ads.setDrawingCacheEnabled(true);
+			Bitmap bm = Bitmap.createBitmap(200, 200,
+					android.graphics.Bitmap.Config.RGB_565);
+			tempCanvas = new Canvas(bm);
+			ads.draw(tempCanvas);
+
+
+			String dataPath = getDataPath();
+			File adsFolder = new File(dataPath + "/" + userId
+					+ "");
+			if (!adsFolder.exists())
+				adsFolder.mkdir();
+			String[] paramsPath = userId.split("/");
+//			File adsIDPath = new File(adsFolder.getPath() + "/"
+//					+ paramsPath[0]);
+//			if (!adsIDPath.exists())
+//				adsIDPath.mkdir();
+			Log.d("Ads", "ads path : " + adsFolder.getPath());
+			// View rootView = ads.getRootView();
+			// ads.setDrawingCacheEnabled(true);
+			// Bitmap bm = Bitmap.createBitmap(ads.getDrawingCache());
+			ImageService.SaveBitmapToSDCard(bm, adsFolder.getPath(),
+					paramsPath[0] + ".jpg", bm.getWidth(), bm.getHeight());
+			Log.d("Ads", "Image path : " + adsFolder.getPath() + "/"
+					+ paramsPath[0] + ".jpg");
+//			File adsThumb = new File(adsIDPath.getPath() + "/thumb");
+//			if (!adsThumb.exists())
+//				adsThumb.mkdir();
+			ImageService.SaveBitmapToSDCard(bm, adsFolder.getPath(),
+					paramsPath[0] + ".jpg", deviceWidth() / 5, deviceHeight() / 4);
+//			Log.d("Ads", "Image path : " + adsFolder.getPath() + "/"
+//					+ paramsPath[0] + ".jpg");
+			// adView.destroyDrawingCache();
+			// v.setDrawingCacheEnabled(false);
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
+	}
+
+	public static String getDataPath() {
+		// TODO Auto-generated method stub
+		File onsdcarddir = new File(Environment.getExternalStorageDirectory()
+				+ "/MapsApplication");
+
+		if (!onsdcarddir.exists()) {
+			onsdcarddir.mkdir(); // create dir here
+		}
+		
+		return "" + onsdcarddir.getPath();
+	}
+	public int deviceWidth() {
+		Display display = ((WindowManager) context
+				.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+		int width = display.getWidth();
+		return width;
+	}
+
+	public int deviceHeight() {
+		Display display = ((WindowManager) context
+				.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+		int height = display.getHeight();
+		return height;
+	}
+	
+	public String getDataFromMiliseconts(long dateInMillis){
+		SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy"); 
+		String dateString = formatter.format(new Date(dateInMillis));
+		Log.d("getDataFromMiliseconts",""+dateString);
+		dateString = dateString.replace("/", "-");
+		return dateString;
+	}
+
 }

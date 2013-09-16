@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -23,11 +24,14 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.example.mapdemo.R;
+import com.example.mapdemo.model.User;
 import com.example.mapdemo.service.IServiceListener;
 import com.example.mapdemo.service.Service;
 import com.example.mapdemo.service.ServiceResponse;
+import com.google.android.gms.maps.model.LatLng;
 
 /**
  * @author Linh Nguyen This activity supports to create new Perming account.
@@ -36,11 +40,10 @@ public class AddUserActivity extends Activity implements TextWatcher,
 		IServiceListener {
 	private static final int GET_IMAGE = 0;
 	// Button createAccount;
-	EditText email;
+//	EditText email;
 	EditText name;
 	EditText phoneNumber;
 	EditText address;
-	EditText confirmaddress;
 	private SharedPreferences prefs;
 	private Button createAccount;
 	private ProgressDialog dialog;
@@ -52,6 +55,11 @@ public class AddUserActivity extends Activity implements TextWatcher,
 	private EditText useremail;
 	private Service service;
 	private String emailValue;
+	private String addresValue;
+	private EditText password;
+	private EditText userId;
+	private String passwordValue;
+	private String userIdValue;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -64,7 +72,9 @@ public class AddUserActivity extends Activity implements TextWatcher,
 		prefs = PreferenceManager
 				.getDefaultSharedPreferences(getApplicationContext());
 		dialog = new ProgressDialog(context);
-		email = (EditText) findViewById(R.id.etEmail);
+//		email = (EditText) findViewById(R.id.etEmail);
+		userId = (EditText)findViewById(R.id.etUserId);
+		password = (EditText)findViewById(R.id.etPassword);
 		name = (EditText) findViewById(R.id.etName);
 		// email.addTextChangedListener(this);
 		// nickemail = (EditText) findViewById(R.id.nickemail);
@@ -90,14 +100,20 @@ public class AddUserActivity extends Activity implements TextWatcher,
 	}
 
 	protected void exeSignup() {
-
+		User user = new User(userIdValue, passwordValue,nameValue, phoneNumberValue, addresValue, null, new ArrayList<LatLng>(),"0");
+		MapsActivity.userList.add(user);
+		Toast.makeText(AddUserActivity.this, "Add user successful", Toast.LENGTH_LONG).show();
+		hideDialog();
 	}
 
 	protected boolean checkInputData() {
 		// TODO Auto-generated method stub
-		emailValue = email.getText().toString();
+//		emailValue = email.getText().toString();
+		userIdValue = userId.getText().toString();
+		passwordValue = password.getText().toString();
 		nameValue = name.getText().toString();
 		phoneNumberValue = phoneNumber.getText().toString();
+		addresValue = address.getText().toString();
 		notify = "";
 		boolean status = true;
 		// if(emailValue.equals("")){
@@ -115,6 +131,21 @@ public class AddUserActivity extends Activity implements TextWatcher,
 			notify += "Input phoneNumber";
 			status = false;
 			phoneNumber.setError("Please input user phoneNumber");
+		}
+		if (addresValue.equals("")) {
+			notify += "Input address";
+			status = false;
+			address.setError("Please input user address");
+		}
+		if (userIdValue.equals("")) {
+			notify += "Input address";
+			status = false;
+			address.setError("Please input user id");
+		}
+		if (passwordValue.equals("")) {
+			notify += "Input address";
+			status = false;
+			address.setError("Please input user password");
 		}
 		// else{
 		// if(!Util.isValidEmail(emailValue)){
@@ -193,11 +224,11 @@ public class AddUserActivity extends Activity implements TextWatcher,
 
 	public void afterTextChanged(Editable s) {
 		// TODO Auto-generated method stub
-		if (email.getText().toString().equals("")) {
-			email.setError("email is required!");
-		}
+//		if (email.getText().toString().equals("")) {
+//			email.setError("email is required!");
+//		}
 		if (name.getText().toString().equals("")) {
-			email.setError("email is required!");
+			name.setError("email is required!");
 		}
 		if (phoneNumber.getText().toString().equals("")) {
 			phoneNumber.setError("phoneNumber is required!");
@@ -205,11 +236,7 @@ public class AddUserActivity extends Activity implements TextWatcher,
 		if (address.getText().toString().equals("")) {
 			address.setError("address is required!");
 		}
-		if (confirmaddress.getText().toString().equals("")
-				|| !confirmaddress.getText().toString()
-						.equals(address.getText().toString())) {
-			confirmaddress.setError("Confirm address is invalid!");
-		}
+
 	}
 
 	public void beforeTextChanged(CharSequence s, int start, int count,

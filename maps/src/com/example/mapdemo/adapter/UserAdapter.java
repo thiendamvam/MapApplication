@@ -6,10 +6,12 @@ import java.util.List;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.example.mapdemo.R;
@@ -29,6 +31,8 @@ public class UserAdapter extends BaseAdapter {
 	}
 	public static class ViewHolderSection {
 		public TextView text;
+		public Button btnStart;
+		public User userData;
 		public ViewHolderSection(){
 			
 		}
@@ -43,10 +47,12 @@ public class UserAdapter extends BaseAdapter {
 			view = inflator.inflate(R.layout.user_item, null);
 			final ViewHolderSection viewHolder = new ViewHolderSection();
 			viewHolder.text = (TextView) view.findViewById(R.id.tvUserName);
-			
+			viewHolder.btnStart = (Button)view.findViewById(R.id.btnStartUser);
+			viewHolder.btnStart.setBackgroundColor(Color.BLUE);
 			view.setTag(viewHolder);
-			holder = (ViewHolderSection) view.getTag();
 			viewHolder.text.setText(item.getName());
+			viewHolder.btnStart.setTag(viewHolder);
+			viewHolder.userData = item;
 //			view.setBackgroundColor(Color.parseColor("#e9e9e9"));
 		} else {
 			view = convertView;

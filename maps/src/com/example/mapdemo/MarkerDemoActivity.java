@@ -325,7 +325,7 @@ public class MarkerDemoActivity extends FragmentActivity
 	private void initUserList() {
 		// TODO Auto-generated method stub
 		userList = new ArrayList<User>();
-		User item = new User("1", "abc", "abc", new LatLng(111, 333), new ArrayList<LatLng>());
+		User item = new User("","","", "abc", "abc", new LatLng(111, 333), new ArrayList<LatLng>(),"0");
 		userList.add(item);
 		UserAdapter userAdapter = new UserAdapter(MarkerDemoActivity.this, userList);
 		lvUserList.setAdapter(userAdapter);
