@@ -399,6 +399,7 @@ public class Service implements Runnable {
 	public void addUser(String id, String password, String name,
 			String phoneNumber, String address, String type) {
 		// TODO Auto-generated method stub
+		Log.d("addUser","addUserId"+id);
 		_action = ServiceAction.ActionAddUser;
 		Map<String, String> params = new HashMap<String, String>();
 		params.put("id", id);

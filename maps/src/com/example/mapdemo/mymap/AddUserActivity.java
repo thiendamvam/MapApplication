@@ -43,7 +43,7 @@ public class AddUserActivity extends Activity implements TextWatcher,
 //	EditText email;
 	EditText name;
 	EditText phoneNumber;
-	EditText address;
+//	EditText address;
 	private SharedPreferences prefs;
 	private Button createAccount;
 	private ProgressDialog dialog;
@@ -80,7 +80,7 @@ public class AddUserActivity extends Activity implements TextWatcher,
 		// nickemail = (EditText) findViewById(R.id.nickemail);
 		phoneNumber = (EditText) findViewById(R.id.etPhoneNumber);
 		// phoneNumber.addTextChangedListener(this);
-		address = (EditText) findViewById(R.id.etAddress);
+//		address = (EditText) findViewById(R.id.etAddress);
 		// address.addTextChangedListener(this);
 		// confirmaddress.addTextChangedListener(this);
 		progressBar = (ProgressBar) findViewById(R.id.prgBar);
@@ -101,6 +101,7 @@ public class AddUserActivity extends Activity implements TextWatcher,
 
 	protected void exeSignup() {
 		User user = new User(userIdValue, passwordValue,nameValue, phoneNumberValue, addresValue, null, new ArrayList<LatLng>(),"0");
+		service.addUser(userIdValue, "", nameValue, phoneNumberValue, "", "0");
 		MapsActivity.userList.add(user);
 		Toast.makeText(AddUserActivity.this, "Add user successful", Toast.LENGTH_LONG).show();
 		hideDialog();
@@ -113,7 +114,7 @@ public class AddUserActivity extends Activity implements TextWatcher,
 		passwordValue = password.getText().toString();
 		nameValue = name.getText().toString();
 		phoneNumberValue = phoneNumber.getText().toString();
-		addresValue = address.getText().toString();
+//		addresValue = address.getText().toString();
 		notify = "";
 		boolean status = true;
 		// if(emailValue.equals("")){
@@ -132,21 +133,21 @@ public class AddUserActivity extends Activity implements TextWatcher,
 			status = false;
 			phoneNumber.setError("Please input user phoneNumber");
 		}
-		if (addresValue.equals("")) {
-			notify += "Input address";
-			status = false;
-			address.setError("Please input user address");
-		}
-		if (userIdValue.equals("")) {
-			notify += "Input address";
-			status = false;
-			address.setError("Please input user id");
-		}
-		if (passwordValue.equals("")) {
-			notify += "Input address";
-			status = false;
-			address.setError("Please input user password");
-		}
+//		if (addresValue.equals("")) {
+//			notify += "Input address";
+//			status = false;
+//			address.setError("Please input user address");
+//		}
+//		if (userIdValue.equals("")) {
+//			notify += "Input address";
+//			status = false;
+//			address.setError("Please input user id");
+//		}
+//		if (passwordValue.equals("")) {
+//			notify += "Input address";
+//			status = false;
+//			address.setError("Please input user password");
+//		}
 		// else{
 		// if(!Util.isValidEmail(emailValue)){
 		// notify+="Your email format is not correct. Please try again";
@@ -233,9 +234,9 @@ public class AddUserActivity extends Activity implements TextWatcher,
 		if (phoneNumber.getText().toString().equals("")) {
 			phoneNumber.setError("phoneNumber is required!");
 		}
-		if (address.getText().toString().equals("")) {
-			address.setError("address is required!");
-		}
+//		if (address.getText().toString().equals("")) {
+//			address.setError("address is required!");
+//		}
 
 	}
 

@@ -283,21 +283,22 @@ containing a value of this type.
         public static final int ground_overlay_demo=0x7f030008;
         public static final int layers_demo=0x7f030009;
         public static final int legal_info=0x7f03000a;
-        public static final int main=0x7f03000b;
-        public static final int map_view=0x7f03000c;
-        public static final int maps_main=0x7f03000d;
-        public static final int marker_demo=0x7f03000e;
-        public static final int multimap_demo=0x7f03000f;
-        public static final int my_location_demo=0x7f030010;
-        public static final int navigation_back_done=0x7f030011;
-        public static final int options_demo=0x7f030012;
-        public static final int polygon_demo=0x7f030013;
-        public static final int polyline_demo=0x7f030014;
-        public static final int raw_mapview_demo=0x7f030015;
-        public static final int save_state_demo=0x7f030016;
-        public static final int snapshot_demo=0x7f030017;
-        public static final int ui_settings_demo=0x7f030018;
-        public static final int user_item=0x7f030019;
+        public static final int login=0x7f03000b;
+        public static final int main=0x7f03000c;
+        public static final int map_view=0x7f03000d;
+        public static final int maps_main=0x7f03000e;
+        public static final int marker_demo=0x7f03000f;
+        public static final int multimap_demo=0x7f030010;
+        public static final int my_location_demo=0x7f030011;
+        public static final int navigation_back_done=0x7f030012;
+        public static final int options_demo=0x7f030013;
+        public static final int polygon_demo=0x7f030014;
+        public static final int polyline_demo=0x7f030015;
+        public static final int raw_mapview_demo=0x7f030016;
+        public static final int save_state_demo=0x7f030017;
+        public static final int snapshot_demo=0x7f030018;
+        public static final int ui_settings_demo=0x7f030019;
+        public static final int user_item=0x7f03001a;
     }
     public static final class menu {
         public static final int activity_main=0x7f080000;

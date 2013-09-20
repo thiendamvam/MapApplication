@@ -19,6 +19,7 @@ import java.util.TimerTask;
 import org.json.JSONObject;
 
 import android.annotation.SuppressLint;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -51,12 +52,14 @@ import android.widget.Toast;
 import com.example.mapdemo.R;
 import com.example.mapdemo.adapter.UserAdapter;
 import com.example.mapdemo.adapter.UserAdapter.ViewHolderSection;
+import com.example.mapdemo.model.ResponseData;
 import com.example.mapdemo.model.User;
-import com.example.mapdemo.service.IServiceListener;
+import com.example.mapdemo.service.IServiceListenerJson;
 import com.example.mapdemo.service.ImageService;
-import com.example.mapdemo.service.Service;
-import com.example.mapdemo.service.ServiceAction;
-import com.example.mapdemo.service.ServiceResponse;
+import com.example.mapdemo.service.jsonservice.Service;
+import com.example.mapdemo.service.jsonservice.ServiceAction;
+import com.example.mapdemo.service.jsonservice.ServiceResponse;
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
@@ -74,12 +77,12 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 public class MapsActivity extends FragmentActivity implements
 		OnMarkerClickListener, OnInfoWindowClickListener, OnMarkerDragListener,
-		IServiceListener {
+		IServiceListenerJson {
 
 	public static ArrayList<User> userList;
 	private HashMap<String, ArrayList<LatLng>> userPositionList;
 	private static final LatLng HANGXANH = new LatLng(10.801216, 106.711278);
-	private boolean isSanbox = true;
+	private boolean isSanbox = false;
 
 	
 	public static boolean IS_ADMIN = true;
@@ -108,7 +111,7 @@ public class MapsActivity extends FragmentActivity implements
 	public static final String TAG_HOTELEMAIL_EN = "email_en";
 	public static final String TAG_HOTELICON = "thumbnail";
 	
-	private User currentUser;
+	public static User currentUser;
 
 	// Dialog elements
 	private Double lon, lat;
@@ -579,6 +582,8 @@ public class MapsActivity extends FragmentActivity implements
 	private Button btnStop;
 	private Button btnMaptype;
 	private LinearLayout lnContent;
+	private String userId;
+	private ProgressDialog dialog;
 
 	public void onStopClicked(View v) {
 		if (btnStop.getText().toString().equals("Stop")) {
@@ -608,7 +613,7 @@ public class MapsActivity extends FragmentActivity implements
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.maps_main);
-
+		dialog = new ProgressDialog(MapsActivity.this);
 		lnUserList = (LinearLayout) findViewById(R.id.lnUserList);
 		lvUserList = (ListView) findViewById(R.id.lvUserList);
 		txtSearchList = (EditText) findViewById(R.id.txtSearchList);
@@ -617,6 +622,14 @@ public class MapsActivity extends FragmentActivity implements
 		userList = new ArrayList();
 		userPositionList = new HashMap<String, ArrayList<LatLng>>();
 
+		userId = getIntent().getStringExtra("user_id");
+		if(userId!=null){
+			if(userId.equals("admin")){
+				IS_ADMIN = true;
+			}else{
+				IS_ADMIN = false;
+			}
+		}
 		ImageLoader imgLoader = new ImageLoader(this);
 		int loader = R.drawable.ic_launcher;
 		Bundle bundle = getIntent().getBundleExtra(TAG_BUNDLEBRANCH);
@@ -659,7 +672,8 @@ public class MapsActivity extends FragmentActivity implements
 		}
 		service = new Service(MapsActivity.this);
 		context = MapsActivity.this;
-		
+
+		exeTestXMLParser();
 		
 		if(IS_ADMIN){
 			setUpMapIfNeeded();
@@ -778,8 +792,32 @@ public class MapsActivity extends FragmentActivity implements
 		}else{
 			if(isSanbox){
 				currentUser = new User("demo@demo.com", "a", "addss", "0900000455",null, MARKER1, new ArrayList<LatLng>(),"0");
+
 			}
+			getCurrentUserData();
 		}
+	}
+
+	private void getCurrentUserData() {
+		// TODO Auto-generated method stub
+		if(userId!=null){
+			service.getUserById(userId);
+			dialog.show();
+		}
+	}
+
+	private void exeTestXMLParser() {
+		// TODO Auto-generated method stub
+		Thread thread = new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+//				XMLParser parser = new XMLParser();
+//				parser.parserXML("http://daythem.com.vn/api/get_user_position.php?id=demo@demo.com");
+			}
+		});
+		thread.start();
 	}
 
 	private void addUserMarker() {
@@ -1028,28 +1066,7 @@ public class MapsActivity extends FragmentActivity implements
 		finish();
 	}
 
-	@Override
-	public void onCompleted(Service service, ServiceResponse result) {
-		// TODO Auto-generated method stub
-		if (result.isSuccess()
-				&& result.getAction() == ServiceAction.ActionAllUser) {
-			userList = (ArrayList<User>) result.getData();
-			initUserList();
-		} else if (!result.isSuccess()
-				&& result.getAction() == ServiceAction.ActionAllUser) {
-			Toast.makeText(context, "get user data fail \ntry again!",
-					Toast.LENGTH_SHORT).show();
-		} else if (result.isSuccess()
-				&& result.getAction() == ServiceAction.ActionGetUserPositionList) {
-			userPositionList = (HashMap<String, ArrayList<LatLng>>) result
-					.getData();
-			// drawWay();
-		} else if (!result.isSuccess()
-				&& result.getAction() == ServiceAction.ActionGetUserPositionList) {
-			Toast.makeText(context, "get user data fail \ntry again!",
-					Toast.LENGTH_SHORT).show();
-		}
-	}
+
 
 	private void drawWay() {
 		// TODO Auto-generated method stub
@@ -1208,8 +1225,10 @@ public class MapsActivity extends FragmentActivity implements
 			holder.btnStart.setText("Stop");
 			holder.btnStart.setBackgroundColor(Color.RED);
 		}
-		mMap.moveCamera(CameraUpdateFactory
-				.newLatLng(holder.userData.getCurrentLatLng()));
+		if(holder.userData.getCurrentLatLng()!=null){
+			mMap.moveCamera(CameraUpdateFactory
+					.newLatLng(holder.userData.getCurrentLatLng()));			
+		}
 	}
 
 
@@ -1331,6 +1350,38 @@ public class MapsActivity extends FragmentActivity implements
 		Log.d("getDataFromMiliseconts",""+dateString);
 		dateString = dateString.replace("/", "-");
 		return dateString;
+	}
+
+	@Override
+	public void onCompleted(Service service, ServiceResponse result) {
+		// TODO Auto-generated method stub
+
+		// TODO Auto-generated method stub
+		ResponseData responseData = (ResponseData)result.getData();
+		if (result.isSuccess()
+				&& result.getAction() == ServiceAction.ActionAllUser) {
+			userList = (ArrayList<User>) responseData.getData();
+			initUserList();
+		} else if (!result.isSuccess()
+				&& result.getAction() == ServiceAction.ActionAllUser) {
+			Toast.makeText(context, "get user data fail \ntry again!",
+					Toast.LENGTH_SHORT).show();
+		} else if (result.isSuccess()
+				&& result.getAction() == ServiceAction.ActionGetUserPositionList) {
+			userPositionList = (HashMap<String, ArrayList<LatLng>>) result
+					.getData();
+			// drawWay();
+		} else if (!result.isSuccess()
+				&& result.getAction() == ServiceAction.ActionGetUserPositionList) {
+			Toast.makeText(context, "get user data fail \ntry again!",
+					Toast.LENGTH_SHORT).show();
+		}else if(result.isSuccess()&& result.getAction() == ServiceAction.ActionUserById){
+			currentUser = (User)responseData.getData();
+			if(dialog.isShowing()){
+				dialog.cancel();
+			}
+		}
+	
 	}
 
 }

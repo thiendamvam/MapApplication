@@ -84,7 +84,7 @@ public class Util {
 		return pattern.matcher(inputMail).matches();
 	}
 
-	public String convertStreamToString(InputStream is) {
+	public static String convertStreamToString(InputStream is) {
 		/*
 		 * To convert the InputStream to String we use the Reader.read(char[]
 		 * buffer) method. We iterate until the Reader return -1 which means

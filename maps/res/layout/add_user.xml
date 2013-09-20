@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             android:background="@android:drawable/editbox_background_normal"
             android:hint="Input user id"
-            android:visibility="gone" />
+            android:visibility="visible" />
 
         <EditText
             android:id="@+id/etPassword"
@@ -68,7 +68,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:background="@android:drawable/editbox_background_normal"
-            android:hint="Input user address" />
+            android:hint="Input user address" 
+            android:visibility="gone"/>
     </LinearLayout>
 
 </LinearLayout>
