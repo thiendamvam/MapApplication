@@ -50,7 +50,7 @@ public class UserAdapter extends BaseAdapter {
 			viewHolder.btnStart = (Button)view.findViewById(R.id.btnStartUser);
 			viewHolder.btnStart.setBackgroundColor(Color.BLUE);
 			view.setTag(viewHolder);
-			viewHolder.text.setText(item.getName());
+			viewHolder.text.setText(item.getId());
 			viewHolder.btnStart.setTag(viewHolder);
 			viewHolder.userData = item;
 //			view.setBackgroundColor(Color.parseColor("#e9e9e9"));

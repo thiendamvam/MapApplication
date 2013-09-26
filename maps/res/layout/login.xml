@@ -26,7 +26,8 @@
             android:layout_height="40dp"
             android:layout_gravity="center_horizontal"
             android:layout_margin="20dp"
-            android:text="Input user id" />
+            android:singleLine="true"
+            android:hint="Input user id" />
     </LinearLayout>
 
 </LinearLayout>

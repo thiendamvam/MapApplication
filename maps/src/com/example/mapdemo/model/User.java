@@ -18,6 +18,7 @@ public class User {
 	public User(String id, String password, String name, String phoneNumber,String address,
 			LatLng currentItem, ArrayList<LatLng> latLng, String type) {
 		// TODO Auto-generated constructor stub
+		this.id = id;
 		this.name = name;
 		this.password = password;
 		this.phoneNumber = phoneNumber;

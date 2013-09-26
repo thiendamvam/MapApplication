@@ -262,9 +262,11 @@ public class Service implements Runnable {
 			String data = getParamsString(_params);
 			if (data != null)
 				if (!data.equals("")) {
-					if (_isGet)
+					if (_isGet){
 						urlString = urlString + "?" + data;
-					else {
+						request = (_isGet) ? new HttpGet(urlString) : new HttpPost(
+								urlString);
+					}else {
 						List<NameValuePair> params = new ArrayList<NameValuePair>();
 						for (String key : _params.keySet()) {
 							params.add(new BasicNameValuePair(key, _params
@@ -362,7 +364,7 @@ public class Service implements Runnable {
 		params.put("lat", lat);
 		params.put("lon", lon);
 		params.put("address", address);
-		request("/api/add_latlng.php", params, true, true);
+		request("/api/add_latlng_json.php", params, true, true);
 	}
 
 	public void login(String id, String password) {

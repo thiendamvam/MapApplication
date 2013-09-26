@@ -78,7 +78,7 @@ public class LoginHome extends FragmentActivity implements IServiceListenerJson{
 			}
 		} else if (!result.isSuccess()
 				&& result.getAction() == ServiceAction.ActionLogin) {
-
+			Toast.makeText(LoginHome.this, "Can not connect to server!",  Toast.LENGTH_LONG).show();
 		} 
 	}
 }

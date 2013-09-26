@@ -91,7 +91,7 @@
             android:layout_height="40dp"
             android:layout_alignParentRight="true"
             android:onClick="onStopClicked"
-            android:text="Stop" >
+            android:text="View Images" >
         </Button>
     </RelativeLayout>
 

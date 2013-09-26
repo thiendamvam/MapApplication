@@ -58,16 +58,21 @@
             android:name=".mymap.MapsActivity"
             android:label="@string/camera_demo"
             android:theme="@android:style/Theme.Black.NoTitleBar" >
+        </activity>
+        <activity
+            android:name=".mymap.AddUserActivity"
+            android:label="@string/camera_demo"
+            android:theme="@android:style/Theme.Black.NoTitleBar" />
+        <activity
+            android:name=".mymap.LoginHome"
+            android:label="@string/camera_demo"
+            android:theme="@android:style/Theme.Black.NoTitleBar" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".mymap.AddUserActivity"
-            android:label="@string/camera_demo"
-            android:theme="@android:style/Theme.Black.NoTitleBar" />
         <activity
             android:name=".CircleDemoActivity"
             android:label="@string/circle_demo" />

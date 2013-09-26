@@ -49,7 +49,7 @@ public class DataParser {
 						JSONObject object = (JSONObject) array.get(i);
 						LatLng item = new LatLng();
 						item.setId(object.optString("id"));
-						item.setAddress(object.optString("lat"));
+						item.setLat(object.optString("lat"));
 						item.setLon(object.optString("lon"));
 						item.setAddress(object.optString("address"));
 						data.add(item);
@@ -119,6 +119,7 @@ public class DataParser {
 		// TODO Auto-generated method stub
 
 		// TODO Auto-generated method stub
+		ResponseData responseData = new ResponseData();
 		ArrayList<User> data = new ArrayList<User>();
 		try {
 			JSONArray array = _root.optJSONArray("result");
@@ -147,7 +148,8 @@ public class DataParser {
 			// TODO: handle exception
 			e.printStackTrace();
 		}
-		return data;
+		responseData.setData(data);
+		return responseData;
 
 	
 	}
@@ -193,20 +195,22 @@ public class DataParser {
 	public Object parserGetUserById(String result) {
 		// TODO Auto-generated method stub
 		try {
+			ResponseData responseData = new ResponseData();
+			User item = null;
 			JSONArray array = _root.optJSONArray("result");
 			if (array != null) {
 				int length = array.length();
 				try {
 					for (int i = 0; i < length; i++) {
 						JSONObject object = (JSONObject) array.get(i);
-						User item = new User();
+						 item = new User();
 						item.setId(object.optString("id"));
 						item.setAddress(object.optString("password"));
 						item.setName(object.optString("phone_number"));
 						item.setPhoneNumber(object.optString("name"));
 						item.setAddress(object.optString("address"));
 						item.setAddress(object.optString("type"));
-						return item;
+						i= length;
 
 					}
 
@@ -215,6 +219,8 @@ public class DataParser {
 					
 				}
 			}
+			responseData.setData(item);
+			return responseData;
 
 		} catch (Exception e) {
 			// TODO: handle exception
